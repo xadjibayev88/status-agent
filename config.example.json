@@ -1,0 +1,10 @@
+{
+  "kanal_nomi": "@sizning_kanal",
+  "access_token": "",
+  "pexels_api_key": "",
+  "api_version": "v23.0",
+  "graph_host": "graph.instagram.com",
+  "vaqtlar": ["09:00", "14:00", "19:30", "22:30"],
+  "fon_qidiruv": ["night city", "ocean waves", "clouds sky", "forest fog", "rain window", "sunset", "mountains", "stars night", "lake", "city lights"],
+  "hashtaglar": ["#statuslar", "#motivatsiya", "#hayot", "#hikmat", "#iqtiboslar", "#ozbekcha", "#uzbek", "#ruhiyat", "#fikr", "#hayotiy", "#reels", "#maslahat"]
+}
