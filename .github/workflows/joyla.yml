@@ -1,0 +1,38 @@
+name: Status joylash
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+    - cron: "0 9 * * *"
+    - cron: "30 14 * * *"
+    - cron: "30 17 * * *"
+  workflow_dispatch:
+    inputs:
+      faqat_test:
+        description: "Faqat video yasash (Instagramga joylamasdan)"
+        type: boolean
+        default: true
+
+jobs:
+  joyla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Agentni ishga tushirish
+        run: python agent.py ${{ (github.event_name == 'workflow_dispatch' && inputs.faqat_test) && '--test' || '--now' }}
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      - name: Videoni saqlab qo'yish
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: video
+          path: chiqish/*.mp4
+          retention-days: 3
+          if-no-files-found: ignore
