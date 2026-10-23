@@ -288,7 +288,7 @@ def fon_tanla(cfg):
 def musiqa_tanla():
     files = []
     for e in ("*.mp3", "*.m4a", "*.wav"):
-        files += list((BASE / "musiqalar").glob(e))
+        files += list((BASE / "musiqalar").glob(e)) + list(BASE.glob(e))
     return random.choice(files) if files else None
 
 
@@ -302,13 +302,20 @@ def ffmpeg_exe():
 
 
 def ambient_input(dur):
-    """mp3 bo'lmasa: ffmpeg bilan yumshoq fon musiqasi (akkord) yasaydi."""
-    chords = [(220.0, 261.63, 329.63), (174.61, 220.0, 261.63),
-              (196.0, 261.63, 329.63), (146.83, 220.0, 293.66)]
-    f = random.choice(chords)
-    parts = [f"0.11*sin(2*PI*{x}*t)" for x in f] + [f"0.07*sin(2*PI*{f[0] / 2}*t)"]
-    expr = "(0.75+0.25*sin(2*PI*0.15*t))*(" + "+".join(parts) + ")"
-    return f"aevalsrc='{expr}':s=44100:d={dur}"
+    """mp3 bo'lmasa: ffmpeg bilan sekin chalinadigan pianino-o'xshash arpedjio yasaydi."""
+    chords = [(220.0, 261.63, 329.63, 440.0),     # La minor
+              (174.61, 220.0, 261.63, 349.23),    # Fa major
+              (196.0, 246.94, 293.66, 392.0),     # Sol major
+              (146.83, 220.0, 293.66, 349.23)]    # Re minor
+    notes = random.choice(chords)
+    P, step = 3.6, 0.9
+    parts = []
+    for i, f in enumerate(notes):
+        tt = f"mod(t+{P - i * step:.2f},{P})"
+        parts.append(f"exp(-1.1*{tt})*(1-exp(-30*{tt}))*"
+                     f"(sin(2*PI*{f}*t)+0.35*sin(2*PI*{2 * f}*t)+0.12*sin(2*PI*{3 * f}*t))*0.17")
+    parts.append(f"0.05*sin(2*PI*{notes[0] / 2}*t)*(0.7+0.3*sin(2*PI*0.1*t))")
+    return f"aevalsrc='{'+'.join(parts)}':s=44100:d={dur}"
 
 
 def video_yasa(q, cfg):
@@ -341,7 +348,7 @@ def video_yasa(q, cfg):
     if music or ambient:
         af = f"afade=t=in:d=1,afade=t=out:st={dur - 1.5}:d=1.5"
         if ambient:
-            af = "lowpass=f=1800,aecho=0.8:0.7:500|900:0.35|0.25," + af
+            af = "lowpass=f=3500,aecho=0.8:0.85:700|1100:0.4|0.3," + af
         cmd += ["-map", "2:a", "-af", af, "-ac", "2"]
     cmd += ["-t", str(dur), "-c:v", "libx264", "-preset", "medium", "-crf", "23"]
     if music or ambient:
