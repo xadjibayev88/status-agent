@@ -106,6 +106,27 @@ def vokal_ajrat(src, tmp):
 
 
 # ---------- Whisper ----------
+def parse_langs(text):
+    """'uz, ru, en,' -> ['uz', 'ru', 'en']"""
+    return [x for x in re.split(r"[\s,;/]+", (text or "").lower()) if x]
+
+
+def tanla_til(model, audio, allowed):
+    """Bitta til berilsa shuni ishlatadi; bir nechta bo'lsa, qo'shiqqa eng mos kelganini tanlaydi."""
+    if not allowed:
+        return None
+    if len(allowed) == 1:
+        return allowed[0]
+    try:
+        _, info = model.transcribe(str(audio), language=None, vad_filter=True, beam_size=1)
+        probs = dict(info.all_language_probs or [])
+        cand = sorted(((probs.get(l, 0.0), l) for l in allowed), reverse=True)
+        log("  Til ehtimolliklari: " + ", ".join(f"{l}={p:.2f}" for p, l in cand))
+        return cand[0][1] if cand[0][0] > 0 else allowed[0]
+    except Exception as e:
+        log(f"  Tilni aniqlab bo'lmadi ({e}), '{allowed[0]}' ishlatiladi")
+        return allowed[0]
+
 def transcribe(model, audio, til):
     segs, info = model.transcribe(
         str(audio), language=til or None, word_timestamps=True,
@@ -121,7 +142,8 @@ def transcribe(model, audio, til):
 
 
 def main():
-    til = os.environ.get("WHISPER_TIL", "").strip()
+    allowed = parse_langs(os.environ.get("WHISPER_TIL", ""))
+    til = ", ".join(allowed)
     model_name = os.environ.get("WHISPER_MODEL", "large-v3").strip() or "large-v3"
     vokal = os.environ.get("VOKAL", "1") == "1"
 
@@ -137,12 +159,14 @@ def main():
     from faster_whisper import WhisperModel
     model = WhisperModel(model_name, device="cpu", compute_type="int8")
 
+    xatolar = 0
     for song in songs:
         log(f"\n>>> {song.name}")
         tmp = Path(tempfile.mkdtemp())
         try:
             audio = vokal_ajrat(song, tmp) if vokal else None
-            words = transcribe(model, audio or song, til)
+            lang = tanla_til(model, audio or song, allowed)
+            words = transcribe(model, audio or song, lang)
             cues = words_to_cues(words)
             if not cues:
                 log("  Hech narsa topilmadi, o'tkazib yuborildi.")
@@ -150,9 +174,14 @@ def main():
             song.with_suffix(".srt").write_text(srt_matn(cues), encoding="utf-8")
             log(f"  ✅ {song.with_suffix('.srt').name}: {len(cues)} qator")
         except Exception as e:
+            xatolar += 1
             log(f"  ❌ Xato: {e}")
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+    if xatolar:
+        log(f"\n{xatolar} ta qo'shiq xato bilan tugadi.")
+        if xatolar == len(songs):
+            sys.exit(1)
 
 
 if __name__ == "__main__":
