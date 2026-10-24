@@ -8,6 +8,8 @@ Instagram status-video agenti.
   python agent.py --now    -> bitta video yasab, darhol joylaydi
 """
 import argparse
+import base64
+import hashlib
 import json
 import os
 import random
@@ -60,6 +62,9 @@ def apply_env(cfg):
     for env, key in (("IG_ACCESS_TOKEN", "access_token"),
                      ("PEXELS_API_KEY", "pexels_api_key"),
                      ("PIXABAY_API_KEY", "pixabay_api_key"),
+                     ("CLOUDINARY_URL", "cloudinary_url"),
+                     ("VIDEO_REPO", "video_repo"),
+                     ("VIDEO_REPO_TOKEN", "video_repo_token"),
                      ("KANAL_NOMI", "kanal_nomi")):
         if os.environ.get(env):
             cfg[key] = os.environ[env]
@@ -620,45 +625,142 @@ def token_yangila(cfg, st, force=False):
         log(f"Token yangilashda xato: {e}")
 
 
+# ---- Cloudinary: Instagram video_url ni oladi, shuning uchun vaqtincha ochiq havola kerak ----
+def cloud_parse(cfg):
+    url = (cfg.get("cloudinary_url") or "").strip().strip("\"'")
+    url = re.sub(r"^CLOUDINARY_URL\s*=\s*", "", url)
+    m = re.match(r"cloudinary://([^:]+):([^@]+)@(.+)$", url)
+    return (m.group(1), m.group(2), m.group(3)) if m else None
+
+
+def cloud_sign(params, secret):
+    s = "&".join(f"{k}={params[k]}" for k in sorted(params) if params[k] not in (None, ""))
+    return hashlib.sha1((s + secret).encode()).hexdigest()
+
+
+def cloud_yukla(cfg, video):
+    import requests
+    c = cloud_parse(cfg)
+    if not c:
+        raise RuntimeError("CLOUDINARY_URL yo'q yoki noto'g'ri (cloudinary://KALIT:SIR@NOM ko'rinishida bo'lishi kerak)")
+    key, secret, cloud = c
+    params = {"folder": "status", "timestamp": int(time.time())}
+    sig = cloud_sign(params, secret)
+    with open(video, "rb") as f:
+        r = requests.post(f"https://api.cloudinary.com/v1_1/{cloud}/video/upload",
+                          data={**params, "api_key": key, "signature": sig},
+                          files={"file": f}, timeout=600)
+    if not r.ok:
+        raise RuntimeError(f"Cloudinary xatosi {r.status_code}: {r.text[:300]}")
+    j = r.json()
+    return j["secure_url"], j["public_id"]
+
+
+def cloud_ochir(cfg, public_id):
+    """Joylangandan keyin vaqtinchalik faylni o'chiramiz (xato bo'lsa ham jim o'tamiz)."""
+    try:
+        import requests
+        key, secret, cloud = cloud_parse(cfg)
+        params = {"public_id": public_id, "timestamp": int(time.time())}
+        requests.post(f"https://api.cloudinary.com/v1_1/{cloud}/video/destroy", timeout=60,
+                      data={**params, "api_key": key, "signature": cloud_sign(params, secret)})
+    except Exception as e:
+        log(f"Cloudinary faylini o'chirib bo'lmadi: {e}")
+
+
+# ---- GitHub (ochiq repozitoriy + jsDelivr): vaqtincha ochiq havola ----
+def github_yukla(cfg, video):
+    import requests
+    repo, tok = cfg["video_repo"].strip(), cfg["video_repo_token"].strip()
+    path = f"v/{datetime.now():%Y%m%d_%H%M%S}.mp4"
+    api = f"https://api.github.com/repos/{repo}/contents/{path}"
+    hdr = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
+    with open(video, "rb") as f:
+        raw = f.read()
+    r = requests.put(api, headers=hdr, timeout=600, json={
+        "message": "vaqtincha video", "content": base64.b64encode(raw).decode()})
+    if not r.ok:
+        raise RuntimeError(f"GitHub xatosi {r.status_code}: {r.text[:300]}")
+    j = r.json()
+    sha, fsha = j["commit"]["sha"], j["content"]["sha"]
+    if len(raw) <= 19 * 1024 * 1024:
+        url = f"https://cdn.jsdelivr.net/gh/{repo}@{sha}/{path}"
+    else:  # jsDelivr 20 MB dan katta fayllarni bermaydi
+        url = f"https://raw.githubusercontent.com/{repo}/{sha}/{path}"
+    for _ in range(30):  # havola ochilguncha kutamiz
+        try:
+            g = requests.get(url, headers={"Range": "bytes=0-1"}, timeout=30)
+            if g.status_code in (200, 206):
+                break
+        except Exception:
+            pass
+        time.sleep(4)
+    else:
+        raise RuntimeError(f"Havola ochilmadi: {url}")
+    return url, ("github", repo, path, fsha)
+
+
+def github_ochir(cfg, info):
+    try:
+        import requests
+        _, repo, path, fsha = info
+        requests.delete(f"https://api.github.com/repos/{repo}/contents/{path}", timeout=60,
+                        headers={"Authorization": f"Bearer {cfg['video_repo_token'].strip()}",
+                                 "Accept": "application/vnd.github+json"},
+                        json={"message": "video o'chirildi", "sha": fsha})
+    except Exception as e:
+        log(f"GitHub faylini o'chirib bo'lmadi: {e}")
+
+
+def video_yukla(cfg, video):
+    """Instagram video_url so'raydi: vaqtincha ochiq havola yasaydi. Qaytaradi: (url, tozalash)."""
+    if cloud_parse(cfg):
+        url, pid = cloud_yukla(cfg, video)
+        return url, (lambda: cloud_ochir(cfg, pid))
+    if cfg.get("video_repo") and cfg.get("video_repo_token"):
+        url, info = github_yukla(cfg, video)
+        return url, (lambda: github_ochir(cfg, info))
+    raise RuntimeError("Vaqtincha havola uchun VIDEO_REPO va VIDEO_REPO_TOKEN (yoki CLOUDINARY_URL) kerak")
+
+
 def ig_joyla(cfg, video, caption):
     import requests
     host = cfg.get("graph_host", "graph.instagram.com")
     ver = cfg.get("api_version", "v23.0")
-    tok = cfg["access_token"]
-    hdr = {"Authorization": f"Bearer {tok}"}
+    hdr = {"Authorization": f"Bearer {cfg['access_token']}"}
 
-    r = _check(requests.post(
-        f"https://{host}/{ver}/me/media", headers=hdr, timeout=60,
-        data={"media_type": "REELS", "upload_type": "resumable",
-              "caption": caption, "share_to_feed": "true"}))
-    j = r.json()
-    cid = j["id"]
-    uri = j.get("uri") or f"https://rupload.facebook.com/ig-api-upload/{ver}/{cid}"
+    url, tozala = video_yukla(cfg, video)
+    log("Video vaqtincha internetga yuklandi")
+    try:
+        r = _check(requests.post(
+            f"https://{host}/{ver}/me/media", headers=hdr, timeout=60,
+            data={"media_type": "REELS", "video_url": url,
+                  "caption": caption, "share_to_feed": "true"}))
+        cid = r.json()["id"]
 
-    size = os.path.getsize(video)
-    with open(video, "rb") as f:
-        _check(requests.post(uri, timeout=900, data=f, headers={
-            "Authorization": f"OAuth {tok}", "offset": "0", "file_size": str(size)}))
+        for _ in range(72):
+            s = requests.get(f"https://{host}/{ver}/{cid}", headers=hdr, timeout=30,
+                             params={"fields": "status_code,status"}).json()
+            code = s.get("status_code")
+            if code == "FINISHED":
+                break
+            if code in ("ERROR", "EXPIRED"):
+                raise RuntimeError(f"Instagram videoni qabul qilmadi: {s}")
+            time.sleep(5)
+        else:
+            raise TimeoutError("Instagram videoni vaqtida qayta ishlamadi")
 
-    for _ in range(60):
-        s = requests.get(f"https://{host}/{ver}/{cid}", headers=hdr, timeout=30,
-                         params={"fields": "status_code,status"}).json()
-        code = s.get("status_code")
-        if code == "FINISHED":
-            break
-        if code in ("ERROR", "EXPIRED"):
-            raise RuntimeError(f"Instagram videoni qabul qilmadi: {s}")
-        time.sleep(5)
-    else:
-        raise TimeoutError("Instagram videoni vaqtida qayta ishlamadi")
-
-    r = _check(requests.post(f"https://{host}/{ver}/me/media_publish", headers=hdr,
-                             data={"creation_id": cid}, timeout=60))
-    log(f"✅ Instagramga joylandi: {r.json()}")
+        r = _check(requests.post(f"https://{host}/{ver}/me/media_publish", headers=hdr,
+                                 data={"creation_id": cid}, timeout=60))
+        log(f"✅ Instagramga joylandi: {r.json()}")
+    finally:
+        tozala()
 
 
 # ---------- asosiy oqim ----------
 def bitta_status(cfg, st, joylash):
+    if joylash and not (cloud_parse(cfg) or (cfg.get("video_repo") and cfg.get("video_repo_token"))):
+        raise RuntimeError("Secrets'da VIDEO_REPO_TOKEN va VIDEO_REPO yo'q: Instagram uchun vaqtincha havola kerak")
     q = tanla_matn(st)
     log(f"Matn: {q['text'][:50]!r} — {q.get('author')}")
     video = video_yasa(q, cfg)
