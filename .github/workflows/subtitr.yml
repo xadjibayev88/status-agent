@@ -54,5 +54,10 @@ jobs:
         run: |
           git config user.name "subtitr-bot"
           git config user.email "subtitr-bot@users.noreply.github.com"
-          git add -A -- '*.srt'
-          git diff --cached --quiet || (git commit -m "Subtitrlar qo'shildi" && git push)
+          git add -A -- '*.srt' || true
+          if git diff --cached --quiet; then
+            echo "Yangi .srt yo'q, saqlanadigan narsa yo'q."
+          else
+            git commit -m "Subtitrlar qo'shildi"
+            git push
+          fi
