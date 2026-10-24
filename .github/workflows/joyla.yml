@@ -2,6 +2,7 @@ name: Status joylash
 
 on:
   schedule:
+    # Toshkent vaqti (UTC+5): 09:00, 14:00, 19:30, 22:30
     - cron: "0 4 * * *"
     - cron: "0 9 * * *"
     - cron: "30 14 * * *"
@@ -29,7 +30,10 @@ jobs:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-      - name: Videoni saqlab qo'yish
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          VIDEO_REPO: ${{ secrets.VIDEO_REPO }}
+          VIDEO_REPO_TOKEN: ${{ secrets.VIDEO_REPO_TOKEN }}
+      - name: Videoni saqlab qo'yish (ko'rish uchun)
         if: always()
         uses: actions/upload-artifact@v4
         with:
