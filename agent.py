@@ -391,22 +391,92 @@ def block_yasa(lines, font, fill, out):
     return pad, h
 
 
+def blok_rasm(lines, font, fill, h):
+    """Bir xil balandlikdagi shaffof matn bloki (yuqoridan tekislangan)."""
+    pad = 14
+    lh = int(getattr(font, "size", 44) * 1.3)
+    img = Image.new("RGBA", (W, h), (0, 0, 0, 0))
+    sh = Image.new("RGBA", (W, h), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sh)
+    for i, ln in enumerate(lines):
+        sd.text((W // 2 + 2, pad + i * lh + 3), ln, font=font, fill=(0, 0, 0, 210), anchor="ma")
+    sh = sh.filter(ImageFilter.GaussianBlur(4))
+    img = Image.alpha_composite(img, sh)
+    d = ImageDraw.Draw(img)
+    for i, ln in enumerate(lines):
+        d.text((W // 2, pad + i * lh), ln, font=font, fill=fill, anchor="ma")
+    return img, pad
+
+
+def subtitr_trek(cues, start, dur, font, probe, out):
+    """Hamma subtitrni BITTA shaffof video-oqimga yig'adi (concat ro'yxati). Tez ishlaydi."""
+    lh = int(getattr(font, "size", 44) * 1.3)
+    pad = 14
+    hs = 3 * lh + 2 * pad
+    blank = out / "_sb.png"
+    Image.new("RGBA", (W, hs), (0, 0, 0, 0)).save(blank)
+    items, t, n = [], 0.0, 0
+
+    def add(png, d):
+        if d > 0.001:
+            items.append((png, d))
+
+    fd = 0.07
+    for a, b, text in cues:
+        a2 = max(a - start, t)
+        b2 = min(b - start, dur)
+        if b2 - a2 < 0.3 or a2 >= dur:
+            continue
+        lines = wrap(probe, text, font, W - 200)[:3]
+        img, _ = blok_rasm(lines, font, "#FFFFFFEB", hs)
+        var = {}
+        for name, mul in (("a", 0.35), ("b", 0.7), ("c", 1.0)):
+            im = img.copy()
+            im.putalpha(im.getchannel("A").point(lambda v, m=mul: int(v * m)))
+            pth = out / f"_s{n}{name}.png"
+            im.save(pth)
+            var[name] = pth
+        add(blank, a2 - t)
+        add(var["a"], fd)
+        add(var["b"], fd)
+        hold = max(0.05, (b2 - a2) - 4 * fd)
+        add(var["c"], hold)
+        add(var["b"], fd)
+        add(var["a"], fd)
+        t = a2 + 4 * fd + hold
+        n += 1
+    add(blank, max(dur - t, 0) + 1.0)
+    lst = out / "_subtitr.txt"
+    with open(lst, "w", encoding="utf-8") as f:
+        for pth, d in items:
+            f.write(f"file '{pth.as_posix()}'\nduration {d:.3f}\n")
+        f.write(f"file '{items[-1][0].as_posix()}'\n")
+    return lst, pad, n
+
+
 def musiqa_katlamlar(q, cfg, music):
-    """Musiqa asosiy rolda: subtitr (.srt bo'lsa) yoki tepada bitta kichik status.
-    Qaytaradi: layers, davomiylik, musiqaning boshlanish soniyasi."""
+    """Musiqa asosiy rolda. Qisqa qo'shiq: BUTUN qo'shiq. Uzun bo'lsa: gap tugaydigan joygacha.
+    Qaytaradi: layers, davomiylik, musiqa boshlanishi, ovoz so'nish uzunligi."""
     md = media_duration(music)
-    dur = round(random.uniform(15, 25), 1)
-    if md and md < dur + 2:
-        dur = round(max(10.0, md - 1), 1)
+    max_s = min(85.0, float(cfg.get("max_soniya", 60)))
     srt = music.with_suffix(".srt")
     cues = parse_srt(srt) if srt.exists() else []
-    start = 0.0
-    if cues:
-        cand = [c for c in cues if not md or c[0] <= md - dur]
+    start, tam = 0.0, False
+    if md <= 0:
+        dur = min(30.0, max_s)
+    elif md <= max_s + 3:
+        dur, tam = md, True                      # butun qo'shiq
+    elif cues:
+        cand = [c for c in cues if c[0] <= md - 20]
         c0 = random.choice(cand) if cand else cues[0]
         start = max(0.0, c0[0] - 1.0)
-    elif md > dur + 4:
-        start = random.uniform(0, md - dur - 2)
+        ends = [c[1] for c in cues if start + 15 <= c[1] <= start + max_s]
+        dur = (max(ends) - start + 0.6) if ends else min(max_s, md - start)
+    else:
+        start = random.uniform(0, md - max_s)
+        dur = max_s
+    dur = round(min(dur, 90.0), 1)
+    log(f"Qo'shiq {md:.0f} soniya -> video {dur} soniya" + (" (butun qo'shiq)" if tam else ""))
 
     spath = find_font(["montserrat"], SANS_SYS)
     qpath = find_font(["cormorant", "playfair", "garamond"], SERIF_SYS)
@@ -417,20 +487,8 @@ def musiqa_katlamlar(q, cfg, music):
 
     if cues:
         font = load_font(spath, 44)
-        n = 0
-        for a, b, text in cues:
-            a2, b2 = a - start, min(b - start, dur - 1.0)
-            if b2 <= 0.3 or a2 >= dur - 1.0:
-                continue
-            a2 = max(a2, 0.2)
-            lines = wrap(probe, text, font, W - 200)[:3]
-            path = out / f"_c{n}.png"
-            pad, _ = block_yasa(lines, font, "#FFFFFFEB", path)
-            fin = min(0.3, (b2 - a2) / 3)
-            layers.append((path, y_sub - pad, a2, b2, fin))
-            n += 1
-            if n >= 16:
-                break
+        lst, pad, n = subtitr_trek(cues, start, dur, font, probe, out)
+        layers.append((lst, y_sub - pad, 0.0, None, 0.0))
         log(f"Subtitr: {srt.name} ({n} qator)")
     else:
         font = load_font(qpath, 50)
@@ -445,7 +503,7 @@ def musiqa_katlamlar(q, cfg, music):
         hp = out / "_handle.png"
         pad, _ = block_yasa([handle], load_font(spath, 32), "#FFFFFFB4", hp)
         layers.append((hp, H - 380 - pad, 2.0, None, 0.9))
-    return layers, dur, start
+    return layers, dur, start, (0.4 if tam else 1.5)
 
 
 def video_yasa(q, cfg):
@@ -455,9 +513,9 @@ def video_yasa(q, cfg):
     uslub = cfg.get("uslub", "musiqa")
     if uslub == "aralash":
         uslub = random.choice(["musiqa", "musiqa", "status"])
-    mstart = None
+    mstart, fo = None, 2.0
     if music and uslub == "musiqa":
-        layers, dur, mstart = musiqa_katlamlar(q, cfg, music)
+        layers, dur, mstart, fo = musiqa_katlamlar(q, cfg, music)
     else:
         layers, dur = katlamlar_yasa(q, cfg)
     bg = fon_tanla(cfg)
@@ -471,7 +529,10 @@ def video_yasa(q, cfg):
     else:
         cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(bg)]
     for path, *_ in layers:
-        cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(path)]
+        if str(path).endswith(".txt"):
+            cmd += ["-f", "concat", "-safe", "0", "-i", str(path)]
+        else:
+            cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(path)]
     ai = 1 + len(layers)
     if music:
         if mstart is not None:
@@ -490,17 +551,20 @@ def video_yasa(q, cfg):
     f = ["[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
          "eq=brightness=-0.06:saturation=0.95,"
          "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.28:t=fill" + zoom + ",setsar=1[v0]"]
-    for i, (_, y, st, en, fin) in enumerate(layers, 1):
-        fx = f"fade=t=in:st={st:.2f}:d={fin:.2f}:alpha=1"
-        if en:
-            fo = min(0.3, (en - st) / 3)
-            fx += f",fade=t=out:st={en - fo:.2f}:d={fo:.2f}:alpha=1"
-        f.append(f"[{i}:v]fps=30,format=rgba,{fx}[s{i}]")
+    for i, (pth, y, st, en, fin) in enumerate(layers, 1):
+        if str(pth).endswith(".txt"):
+            f.append(f"[{i}:v]fps=30,format=rgba[s{i}]")
+        else:
+            fx = f"fade=t=in:st={st:.2f}:d={fin:.2f}:alpha=1"
+            if en:
+                fe = min(0.3, (en - st) / 3)
+                fx += f",fade=t=out:st={en - fe:.2f}:d={fe:.2f}:alpha=1"
+            f.append(f"[{i}:v]fps=30,format=rgba,{fx}[s{i}]")
         f.append(f"[v{i - 1}][s{i}]overlay=0:{y}:format=auto[v{i}]")
     f.append(f"[v{len(layers)}]fade=t=out:st={dur - 1.2:.2f}:d=1.2,format=yuv420p[v]")
     cmd += ["-filter_complex", ";".join(f), "-map", "[v]"]
     if music or ambient:
-        af = f"afade=t=in:d=1.5,afade=t=out:st={dur - 2:.1f}:d=2"
+        af = f"afade=t=in:d=1.0,afade=t=out:st={max(dur - fo, 0):.1f}:d={fo}"
         if ambient:
             af = "lowpass=f=3500,aecho=0.8:0.85:700|1100:0.4|0.3," + af
         cmd += ["-map", f"{ai}:a", "-af", af, "-ac", "2"]
