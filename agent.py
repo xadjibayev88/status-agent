@@ -535,7 +535,7 @@ def musiqa_katlamlar(q, cfg, music):
     md = media_duration(music)
     max_s = min(85.0, float(cfg.get("max_soniya", 60)))
     srt = music.with_suffix(".srt")
-    cues = parse_srt(srt) if srt.exists() else []
+    cues = parse_srt(srt) if (cfg.get("subtitr", False) and srt.exists()) else []  # subtitr standart o'chiq
     start, tam = 0.0, False
     if md <= 0:
         dur = min(30.0, max_s)
