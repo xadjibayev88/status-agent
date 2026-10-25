@@ -661,6 +661,17 @@ def caption_yasa(q, cfg):
     s = q["text"].replace("\n", " ")
     if q.get("author"):
         s += f"\n\n— {q['author']}"
+    chaqiriq = cfg.get("chaqiriqlar") or [
+        "💌 Bu statusni kimga yuborgan bo'lardingiz?",
+        "🔖 Saqlab qo'ying, kerak bo'lib qoladi",
+        "✨ Har kuni yangi statuslar — obuna bo'lib qoling",
+        "💬 Rozimisiz? Izohda yozing",
+        "🤍 Yoqqan bo'lsa, do'stingizga yuboring",
+        "📌 Shu so'zlar kimga kerak — belgilab qo'ying",
+    ]
+    s += "\n\n" + random.choice(chaqiriq)
+    if cfg.get("kanal_nomi"):
+        s += f"\n{cfg['kanal_nomi']}"
     tags = cfg.get("hashtaglar", [])
     if tags:
         s += "\n\n" + " ".join(random.sample(tags, min(8, len(tags))))
@@ -801,15 +812,10 @@ def ig_joyla(cfg, video, caption):
     ver = cfg.get("api_version", "v23.0")
     hdr = {"Authorization": f"Bearer {cfg['access_token']}"}
 
-    url, tozala = video_yukla(cfg, video)
-    log("Video vaqtincha internetga yuklandi")
-    try:
-        r = _check(requests.post(
-            f"https://{host}/{ver}/me/media", headers=hdr, timeout=60,
-            data={"media_type": "REELS", "video_url": url,
-                  "caption": caption, "share_to_feed": "true"}))
+    def joyla(data):
+        r = _check(requests.post(f"https://{host}/{ver}/me/media", headers=hdr,
+                                 timeout=60, data=data))
         cid = r.json()["id"]
-
         for _ in range(72):
             s = requests.get(f"https://{host}/{ver}/{cid}", headers=hdr, timeout=30,
                              params={"fields": "status_code,status"}).json()
@@ -821,12 +827,38 @@ def ig_joyla(cfg, video, caption):
             time.sleep(5)
         else:
             raise TimeoutError("Instagram videoni vaqtida qayta ishlamadi")
-
         r = _check(requests.post(f"https://{host}/{ver}/me/media_publish", headers=hdr,
                                  data={"creation_id": cid}, timeout=60))
-        log(f"✅ Instagramga joylandi: {r.json()}")
+        return r.json()
+
+    url, tozala = video_yukla(cfg, video)
+    log("Video vaqtincha internetga yuklandi")
+    try:
+        res = joyla({"media_type": "REELS", "video_url": url,
+                     "caption": caption, "share_to_feed": "true"})
+        log(f"✅ Reels joylandi: {res}")
+        if story_kerakmi(cfg):
+            if media_duration(video) > 60:
+                log("Story o'tkazib yuborildi: video 60 soniyadan uzun (Instagram story chegarasi)")
+            else:
+                try:
+                    res = joyla({"media_type": "STORIES", "video_url": url})
+                    log(f"✅ Story joylandi: {res}")
+                except Exception as e:  # story xatosi Reels'ni buzmasin
+                    log(f"Story joylanmadi: {e}")
     finally:
         tozala()
+
+
+def story_kerakmi(cfg):
+    """Kuniga 9 ta joylashdan ~6 tasi story'ga ham chiqadi (story_ulushi: 3 tadan 2 tasi)."""
+    if cfg.get("story", True) is False:
+        return False
+    har, nechta = cfg.get("story_ulushi", [2, 3])
+    n = os.environ.get("GITHUB_RUN_NUMBER")
+    if n and n.isdigit():
+        return int(n) % nechta < har
+    return random.random() < har / nechta
 
 
 # ---------- asosiy oqim ----------
