@@ -20,7 +20,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageStat
 
 BASE = Path(__file__).resolve().parent
 W, H = 1080, 1920
@@ -150,6 +150,13 @@ def wrap(draw, text, font, maxw):
     return lines
 
 
+def scrim_yasa(y0, y1, out, alpha=64, blur=150):
+    """Faqat matn orqasida yumshoq qorayish: yorqin fonda ham o'qilsin, kadr esa yorqin qolsin."""
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(img).rectangle([0, max(0, y0), W, min(H, y1)], fill=(0, 0, 0, alpha))
+    img.filter(ImageFilter.GaussianBlur(blur)).save(out)
+
+
 def strip_yasa(text, font, fill, h, out):
     """Bitta qator uchun shaffof tasma (soya bilan). Matn tasma ichida pad dan boshlanadi."""
     pad = 14
@@ -183,6 +190,8 @@ def katlamlar_yasa(q, cfg):
     y = int(H * 0.45 - total / 2)
     out = BASE / "chiqish"
     layers = []
+    scrim_yasa(y - 200, y + total + 200, out / "_scrim.png")
+    layers.append((out / "_scrim.png", 0, 0.2, None, 0.8))
 
     def add(name, text, f, fill, yy, h, start):
         path = out / f"_{name}.png"
@@ -226,9 +235,40 @@ def gradient_fon(out):
     return out
 
 
-def pexels_video(cfg, key):
+BRIGHT_QUERIES = [
+    "mountain landscape", "waterfall", "green forest sunlight", "tropical beach aerial",
+    "blue lake mountains", "flower field", "sunrise mountains", "autumn forest",
+    "river valley aerial", "snow mountains", "green meadow", "ocean waves beach",
+    "cherry blossom", "golden sunset sea", "countryside aerial", "rice terraces",
+    "canyon aerial", "lavender field", "island aerial", "jungle waterfall",
+    "spring forest", "clouds mountains aerial", "palm trees beach", "summer field wind",
+]
+
+
+def mavzular(cfg):
+    return cfg.get("fon_mavzu") or BRIGHT_QUERIES
+
+
+def parlaqlik(path):
+    """Videoning o'rtacha yorqinligi (0..255). Past bo'lsa, qorong'u deb o'tkazib yuboramiz."""
+    out = BASE / "chiqish"
+    try:
+        subprocess.run([ffmpeg_exe(), "-y", "-v", "error", "-i", str(path), "-t", "8",
+                        "-vf", "fps=0.4,scale=64:-1", str(out / "_b%d.png")], timeout=120)
+    except Exception:
+        return 255.0
+    vals = []
+    for i in range(1, 6):
+        f = out / f"_b{i}.png"
+        if f.exists():
+            vals.append(ImageStat.Stat(Image.open(f).convert("L")).mean[0])
+            f.unlink()
+    return sum(vals) / len(vals) if vals else 255.0
+
+
+def pexels_video(cfg, key, exclude=()):
     import requests
-    q = random.choice(cfg.get("fon_qidiruv", ["nature"]))
+    q = random.choice(mavzular(cfg))
     r = requests.get("https://api.pexels.com/videos/search",
                      headers={"Authorization": key},
                      params={"query": q, "orientation": "portrait",
@@ -237,7 +277,7 @@ def pexels_video(cfg, key):
     vids = r.json().get("videos", [])
     random.shuffle(vids)
     for v in vids:
-        if v.get("duration", 0) < 6:
+        if v.get("duration", 0) < 6 or f"pexels_{v['id']}.mp4" in exclude:
             continue
         files = [f for f in v.get("video_files", [])
                  if f.get("file_type") == "video/mp4"
@@ -258,26 +298,42 @@ def pexels_video(cfg, key):
     return None
 
 
-def pixabay_video(cfg, key):
+def pixabay_variant(h):
+    """Eng mos o'lcham: kengligi 1280-2560, hajmi 40 MB gacha (4K og'ir, o'tkazib yuboramiz)."""
+    best = None
+    for k in ("large", "medium", "small"):
+        f = (h.get("videos") or {}).get(k) or {}
+        w_, size = f.get("width", 0), f.get("size", 0)
+        if not f.get("url") or not (1280 <= w_ <= 2560) or (size and size > 40 * 1024 * 1024):
+            continue
+        if best is None or w_ > best.get("width", 0):
+            best = f
+    if best is None:  # mos kelmasa, mavjudlaridan eng kichigini olamiz
+        for k in ("medium", "small", "tiny"):
+            f = (h.get("videos") or {}).get(k) or {}
+            if f.get("url"):
+                return f
+    return best
+
+
+def pixabay_video(cfg, key, exclude=()):
     import requests
-    q = random.choice(cfg.get("fon_qidiruv", ["nature"]))
+    q = random.choice(mavzular(cfg))
     r = requests.get("https://pixabay.com/api/videos/", timeout=30,
-                     params={"key": key, "q": q, "per_page": 30,
-                             "safesearch": "true", "min_width": 720})
+                     params={"key": key, "q": q, "category": "nature", "order": "popular",
+                             "per_page": 50, "page": random.randint(1, 3),
+                             "safesearch": "true", "min_width": 1280})
     r.raise_for_status()
     hits = [h for h in r.json().get("hits", []) if h.get("duration", 0) >= 6]
     random.shuffle(hits)
-
-    def info(h):
-        v = h.get("videos", {})
-        f = v.get("large") if v.get("large", {}).get("url") else v.get("medium", {})
-        return f
-
     # vertikal (portret) videolarni afzal ko'ramiz, bo'lmasa istalgani (markazdan kesiladi)
-    hits.sort(key=lambda h: 0 if info(h).get("height", 0) > info(h).get("width", 1) else 1)
+    def vert(h):
+        f = pixabay_variant(h) or {}
+        return 0 if f.get("height", 0) > f.get("width", 1) else 1
+    hits.sort(key=vert)
     for h in hits:
-        f = info(h)
-        if not f.get("url"):
+        f = pixabay_variant(h)
+        if not f or not f.get("url") or f"pixabay_{h['id']}.mp4" in exclude:
             continue
         path = BASE / "fon_videolar" / f"pixabay_{h['id']}.mp4"
         if not path.exists():
@@ -292,16 +348,30 @@ def pixabay_video(cfg, key):
 
 
 def fon_tanla(cfg):
+    min_yorqin = float(cfg.get("min_yorqinlik", 80))
     for nom, fn, kalit in (("Pexels", pexels_video, "pexels_api_key"),
                            ("Pixabay", pixabay_video, "pixabay_api_key")):
         key = (cfg.get(kalit) or "").strip()
-        if key:
+        if not key:
+            continue
+        tried, last = set(), None
+        for _ in range(5):
             try:
-                p = fn(cfg, key)
-                if p:
-                    return p
+                p = fn(cfg, key, tried)
             except Exception as e:
                 log(f"{nom} ishlamadi: {e}")
+                break
+            if not p:
+                break
+            tried.add(p.name)
+            last = p
+            y = parlaqlik(p)
+            if y >= min_yorqin:
+                log(f"Yorqinlik {y:.0f}: yaxshi")
+                return p
+            log(f"Yorqinlik {y:.0f}: qorong'u, boshqasini qidiramiz")
+        if last:
+            return last
     local = []
     for e in ("*.mp4", "*.mov", "*.webm"):
         local += list((BASE / "fon_videolar").glob(e))
@@ -386,8 +456,8 @@ def block_yasa(lines, font, fill, out):
     sh = Image.new("RGBA", (W, h), (0, 0, 0, 0))
     sd = ImageDraw.Draw(sh)
     for i, ln in enumerate(lines):
-        sd.text((W // 2 + 2, pad + i * lh + 3), ln, font=font, fill=(0, 0, 0, 210), anchor="ma")
-    sh = sh.filter(ImageFilter.GaussianBlur(4))
+        sd.text((W // 2 + 2, pad + i * lh + 3), ln, font=font, fill=(0, 0, 0, 235), anchor="ma")
+    sh = sh.filter(ImageFilter.GaussianBlur(5))
     img = Image.alpha_composite(img, sh)
     d = ImageDraw.Draw(img)
     for i, ln in enumerate(lines):
@@ -404,8 +474,8 @@ def blok_rasm(lines, font, fill, h):
     sh = Image.new("RGBA", (W, h), (0, 0, 0, 0))
     sd = ImageDraw.Draw(sh)
     for i, ln in enumerate(lines):
-        sd.text((W // 2 + 2, pad + i * lh + 3), ln, font=font, fill=(0, 0, 0, 210), anchor="ma")
-    sh = sh.filter(ImageFilter.GaussianBlur(4))
+        sd.text((W // 2 + 2, pad + i * lh + 3), ln, font=font, fill=(0, 0, 0, 235), anchor="ma")
+    sh = sh.filter(ImageFilter.GaussianBlur(5))
     img = Image.alpha_composite(img, sh)
     d = ImageDraw.Draw(img)
     for i, ln in enumerate(lines):
@@ -490,6 +560,9 @@ def musiqa_katlamlar(q, cfg, music):
     layers = []
     y_sub = int(H * float(cfg.get("subtitr_y", 0.32)))
 
+    nl = 3 if cues else 6
+    scrim_yasa(y_sub - 220, y_sub + nl * 62 + 220, out / "_scrim.png")
+    layers.append((out / "_scrim.png", 0, 0.2, None, 0.8))
     if cues:
         font = load_font(spath, 44)
         lst, pad, n = subtitr_trek(cues, start, dur, font, probe, out)
@@ -554,8 +627,7 @@ def video_yasa(q, cfg):
     zoom = "" if is_video else (",zoompan=z='min(1+0.0006*on,1.25)':x='iw/2-(iw/zoom/2)'"
                                 ":y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30")
     f = ["[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
-         "eq=brightness=-0.06:saturation=0.95,"
-         "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.28:t=fill" + zoom + ",setsar=1[v0]"]
+         "eq=saturation=1.12:contrast=1.04" + zoom + ",setsar=1[v0]"]
     for i, (pth, y, st, en, fin) in enumerate(layers, 1):
         if str(pth).endswith(".txt"):
             f.append(f"[{i}:v]fps=30,format=rgba[s{i}]")
@@ -573,7 +645,7 @@ def video_yasa(q, cfg):
         if ambient:
             af = "lowpass=f=3500,aecho=0.8:0.85:700|1100:0.4|0.3," + af
         cmd += ["-map", f"{ai}:a", "-af", af, "-ac", "2"]
-    cmd += ["-t", d, "-c:v", "libx264", "-preset", "medium", "-crf", "23"]
+    cmd += ["-t", d, "-c:v", "libx264", "-preset", "veryfast", "-crf", "23"]
     if music or ambient:
         cmd += ["-c:a", "aac", "-b:a", "128k"]
     cmd += ["-movflags", "+faststart", str(out)]
