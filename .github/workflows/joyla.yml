@@ -42,6 +42,12 @@ jobs:
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           VIDEO_REPO: ${{ secrets.VIDEO_REPO }}
           VIDEO_REPO_TOKEN: ${{ secrets.VIDEO_REPO_TOKEN }}
+      - name: Izohlarga javob yozish (faollik agenti)
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.faqat_test) }}
+        continue-on-error: true
+        run: python faollik.py
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
       - name: Videoni saqlab qo'yish (ko'rish uchun)
         if: always()
         uses: actions/upload-artifact@v4
