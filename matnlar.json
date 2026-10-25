@@ -1,24 +1,1146 @@
 [
-  {"text": "Odamiy ersang, demagil odami,\nOnikim, yo'q xalq g'ami.", "author": "Alisher Navoiy"},
-  {"text": "Hayotingiz fikrlaringiz rangiga bo'yaladi.", "author": "Mark Avreliy"},
-  {"text": "Ertalab turish og'ir bo'lsa, o'zingga ayt: men inson sifatida ishlash uchun uyg'onyapman.", "author": "Mark Avreliy"},
-  {"text": "Biz haqiqatda chekkanimizdan ko'ra, ko'proq tasavvurimizda azob chekamiz.", "author": "Seneka"},
-  {"text": "Biz qiyinligi uchun jur'at qilmaymiz, deb o'ylaymiz. Aslida jur'at qilmaganimiz uchun qiyin tuyuladi.", "author": "Seneka"},
-  {"text": "Bizni narsalarning o'zi emas, ularga bo'lgan qarashimiz bezovta qiladi.", "author": "Epiktet"},
-  {"text": "Ming chaqirimlik yo'l ham bir qadamdan boshlanadi.", "author": "Lao Szi"},
-  {"text": "Vaqtingiz cheklangan.\nUni boshqa birovning hayotini yashashga sarflamang.", "author": "Stiv Jobs"},
-  {"text": "Nima uchun yashashini bilgan odam deyarli har qanday qiyinchilikka chidaydi.", "author": "Fridrix Nitsshe"},
-  {"text": "Hayot velosiped haydashga o'xshaydi:\nmuvozanatni saqlash uchun to'xtamay yurish kerak.", "author": "Albert Eynshteyn"},
-  {"text": "Tasavvur bilimdan muhimroq.", "author": "Albert Eynshteyn"},
-  {"text": "Dunyoni go'zallik qutqaradi.", "author": "Fyodor Dostoyevskiy"},
-  {"text": "Ey birodar, sen aslida o'z fikrlaringdan iboratsan,\nqolgani suyak va tomirdir.", "author": "Jaloliddin Rumiy"},
-  {"text": "Tekshirilmagan hayot yashashga arzimaydi.", "author": "Sokrat"},
-  {"text": "Bir daryoga ikki marta kirib bo'lmaydi.", "author": "Geraklit"},
-  {"text": "Mashg'ulotning har daqiqasidan nafratlandim, lekin o'zimga dedim: to'xtama, hozir azob chek, qolgan umringni chempion bo'lib yasha.", "author": "Muhammad Ali"},
-  {"text": "Sabrning tagi sariq oltin.", "author": "Xalq maqoli"},
-  {"text": "Yetti o'lchab, bir kes.", "author": "Xalq maqoli"},
-  {"text": "Ko'p yashagan emas, ko'p ko'rgan biladi.", "author": "Xalq maqoli"},
-  {"text": "Yaxshilik qil, daryoga tashla,\nbaliq bilmasa, Xoliq biladi.", "author": "Xalq maqoli"},
-  {"text": "Bir qo'l bilan chapak chalinmas.", "author": "Xalq maqoli"},
-  {"text": "Sekin yurganingdan emas, to'xtab qolishingdan qo'rq.", "author": "Xitoy maqoli"}
+ {
+  "text": "Odamiy ersang, demagil odami,\nOnikim, yo'q xalq g'ami.",
+  "author": "Alisher Navoiy"
+ },
+ {
+  "text": "Hayotingiz fikrlaringiz rangiga bo'yaladi.",
+  "author": "Mark Avreliy"
+ },
+ {
+  "text": "Ertalab turish og'ir bo'lsa, o'zingga ayt: men inson sifatida ishlash uchun uyg'onyapman.",
+  "author": "Mark Avreliy"
+ },
+ {
+  "text": "Yo'lga to'siq bo'lgan narsa yo'lning o'zi bo'lib qoladi.",
+  "author": "Mark Avreliy"
+ },
+ {
+  "text": "Eng yaxshi qasos — ularga o'xshamaslikdir.",
+  "author": "Mark Avreliy"
+ },
+ {
+  "text": "Biz haqiqatda chekkanimizdan ko'ra, ko'proq tasavvurimizda azob chekamiz.",
+  "author": "Seneka"
+ },
+ {
+  "text": "Biz qiyinligi uchun jur'at qilmaymiz, deb o'ylaymiz. Aslida jur'at qilmaganimiz uchun qiyin tuyuladi.",
+  "author": "Seneka"
+ },
+ {
+  "text": "Vaqtimiz kam emas, biz uni ko'p isrof qilamiz.",
+  "author": "Seneka"
+ },
+ {
+  "text": "Bizni narsalarning o'zi emas, ularga bo'lgan qarashimiz bezovta qiladi.",
+  "author": "Epiktet"
+ },
+ {
+  "text": "Ba'zi narsalar bizning ixtiyorimizda, ba'zilari esa yo'q.",
+  "author": "Epiktet"
+ },
+ {
+  "text": "Ming chaqirimlik yo'l ham bir qadamdan boshlanadi.",
+  "author": "Lao Szi"
+ },
+ {
+  "text": "Boshqalarni yengan — kuchli, o'zini yengan — qudratli.",
+  "author": "Lao Szi"
+ },
+ {
+  "text": "Bilganingni bilaman, bilmaganingni bilmayman deyish — haqiqiy bilimdir.",
+  "author": "Konfutsiy"
+ },
+ {
+  "text": "Vaqtingiz cheklangan.\nUni boshqa birovning hayotini yashashga sarflamang.",
+  "author": "Stiv Jobs"
+ },
+ {
+  "text": "Och qoling. Telba bo'ling.",
+  "author": "Stiv Jobs"
+ },
+ {
+  "text": "Nima uchun yashashini bilgan odam deyarli har qanday qiyinchilikka chidaydi.",
+  "author": "Fridrix Nitsshe"
+ },
+ {
+  "text": "Meni o'ldirmaydigan narsa meni kuchliroq qiladi.",
+  "author": "Fridrix Nitsshe"
+ },
+ {
+  "text": "Hayot velosiped haydashga o'xshaydi:\nmuvozanatni saqlash uchun to'xtamay yurish kerak.",
+  "author": "Albert Eynshteyn"
+ },
+ {
+  "text": "Tasavvur bilimdan muhimroq.",
+  "author": "Albert Eynshteyn"
+ },
+ {
+  "text": "Men dahoman demayman, men shunchaki juda qiziquvchanman.",
+  "author": "Albert Eynshteyn"
+ },
+ {
+  "text": "Dunyoni go'zallik qutqaradi.",
+  "author": "Fyodor Dostoyevskiy"
+ },
+ {
+  "text": "Hamma baxtli oilalar bir-biriga o'xshaydi, har bir baxtsiz oila esa o'zicha baxtsiz.",
+  "author": "Lev Tolstoy"
+ },
+ {
+  "text": "Hamma dunyoni o'zgartirishni o'ylaydi, lekin hech kim o'zini o'zgartirishni o'ylamaydi.",
+  "author": "Lev Tolstoy"
+ },
+ {
+  "text": "Hayotdagi eng katta baxt — sevilayotganingga ishonchdir.",
+  "author": "Viktor Gyugo"
+ },
+ {
+  "text": "Jasorat — qo'rquvga qarshilik, qo'rquvni yengishdir, qo'rqmaslik emas.",
+  "author": "Mark Tven"
+ },
+ {
+  "text": "Men hayotimda qayta-qayta yutqazdim. Aynan shuning uchun g'alaba qildim.",
+  "author": "Maykl Jordan"
+ },
+ {
+  "text": "Mashg'ulotning har daqiqasidan nafratlandim, lekin o'zimga dedim: to'xtama, hozir azob chek, qolgan umringni chempion bo'lib yasha.",
+  "author": "Muhammad Ali"
+ },
+ {
+  "text": "Ey birodar, sen aslida o'z fikrlaringdan iboratsan,\nqolgani suyak va tomirdir.",
+  "author": "Jaloliddin Rumiy"
+ },
+ {
+  "text": "Tekshirilmagan hayot yashashga arzimaydi.",
+  "author": "Sokrat"
+ },
+ {
+  "text": "Bir daryoga ikki marta kirib bo'lmaydi.",
+  "author": "Geraklit"
+ },
+ {
+  "text": "Sabrning tagi sariq oltin.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Yetti o'lchab, bir kes.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Ko'p yashagan emas, ko'p ko'rgan biladi.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Yaxshilik qil, daryoga tashla,\nbaliq bilmasa, Xoliq biladi.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Bir qo'l bilan chapak chalinmas.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Sabr qilgan murodiga yetar.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Birlashgan o'zar, birlashmagan to'zar.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Qo'rqqanga qo'sh ko'rinar.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Ko'ngil ko'ngildan suv ichar.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Yaxshi so'z — jon ozig'i.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Qatra-qatra suv yig'ilib, daryo bo'lur.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Mehnat qilsang, rohat ko'rarsan.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Til — dilning tarjimoni.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Do'st achitib gapirar, dushman kuldirib.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Ona yurt — oltin beshik.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Sog'lik — eng katta boylik.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Sekin yurganingdan emas, to'xtab qolishingdan qo'rq.",
+  "author": "Xitoy maqoli"
+ },
+ {
+  "text": "Hamma narsa o'z vaqtida bo'ladi.\nFaqat sabr qil.",
+  "author": null
+ },
+ {
+  "text": "Eng qiyin kunlar eng kuchli odamlarni yaratadi.",
+  "author": null
+ },
+ {
+  "text": "Ba'zan jim qolish — eng katta javob.",
+  "author": null
+ },
+ {
+  "text": "Seni tushunmaganlar uchun o'zgarma.",
+  "author": null
+ },
+ {
+  "text": "O'tmish — dars, kelajak — umid, bugun — imkoniyat.",
+  "author": null
+ },
+ {
+  "text": "Yiqilganingda emas, turmay qolganingda yutqazasan.",
+  "author": null
+ },
+ {
+  "text": "Har tong — yangi boshlanish.",
+  "author": null
+ },
+ {
+  "text": "Qiyinchilik yo'lingni yopmaydi, kuchingni sinaydi.",
+  "author": null
+ },
+ {
+  "text": "Bugun qilgan kichik qadaming ertangi katta natijang.",
+  "author": null
+ },
+ {
+  "text": "Hech kim mukammal emas, lekin harakat qilganlar chiroyli.",
+  "author": null
+ },
+ {
+  "text": "Yaxshilik qilib unut, yomonlik ko'rib kechir.",
+  "author": null
+ },
+ {
+  "text": "Sog'inch — sevgining sukunatdagi ovozi.",
+  "author": null
+ },
+ {
+  "text": "Kimningdir yuragida joying bo'lsa, masofa to'siq emas.",
+  "author": null
+ },
+ {
+  "text": "Onaning duosi — eng kuchli qalqon.",
+  "author": null
+ },
+ {
+  "text": "Ota-onang borida qadrlagin: ulardan qimmat narsa yo'q.",
+  "author": null
+ },
+ {
+  "text": "Vaqt hammaga bir xil beriladi, farq — undan qanday foydalanishda.",
+  "author": null
+ },
+ {
+  "text": "Kech bo'ldi dema. Eng yaxshi vaqt — hozir.",
+  "author": null
+ },
+ {
+  "text": "O'zingga ishongan odamni hech narsa to'xtata olmaydi.",
+  "author": null
+ },
+ {
+  "text": "Orzu qilishdan to'xtama, harakat qilishdan to'xtama.",
+  "author": null
+ },
+ {
+  "text": "Ichingdagi og'riq bir kun kuchingga aylanadi.",
+  "author": null
+ },
+ {
+  "text": "Bir kun kelib hammasi joyiga tushadi.\nFaqat ishonchni yo'qotma.",
+  "author": null
+ },
+ {
+  "text": "Hayot qisqa. Vaqtingni noto'g'ri odamlarga sarflama.",
+  "author": null
+ },
+ {
+  "text": "Ko'zingda yosh bo'lsa ham, yuzingda tabassum bo'lsin.",
+  "author": null
+ },
+ {
+  "text": "Dunyoga yaxshilik bilan qara, dunyo ham senga shunday qaraydi.",
+  "author": null
+ },
+ {
+  "text": "Eng katta boylik — tinch qalb.",
+  "author": null
+ },
+ {
+  "text": "Shukr qilishni bilgan odam hech qachon kambag'al bo'lmaydi.",
+  "author": null
+ },
+ {
+  "text": "Yolg'izlik yomon emas, noto'g'ri odamlar orasida yashash yomon.",
+  "author": null
+ },
+ {
+  "text": "Sabr — jim turish emas, umidni yo'qotmasdan kutishdir.",
+  "author": null
+ },
+ {
+  "text": "Eng chiroyli qasos — o'z hayotingni go'zal qilishdir.",
+  "author": null
+ },
+ {
+  "text": "Do'st qiyin kunda bilinadi.",
+  "author": null
+ },
+ {
+  "text": "Kichik narsalardan baxtli bo'lishni o'rgan. Katta baxt shulardan iborat.",
+  "author": null
+ },
+ {
+  "text": "Hech narsa qilmaslikdan ko'ra, xato qilgan afzal.",
+  "author": null
+ },
+ {
+  "text": "Sen o'ylagandan ham kuchlisan.",
+  "author": null
+ },
+ {
+  "text": "Kechagi o'zingdan yaxshiroq bo'lishga harakat qil, boshqalardan emas.",
+  "author": null
+ },
+ {
+  "text": "Qalbing xotirjam bo'lsa, dunyo go'zal.",
+  "author": null
+ },
+ {
+  "text": "Kuch — yiqilmaslikda emas, har safar qayta turishda.",
+  "author": null
+ },
+ {
+  "text": "Bir kun hozirgi kunlaring ham sog'inchli bo'lib tuyuladi.",
+  "author": null
+ },
+ {
+  "text": "Hayotda hamma narsa o'tadi — yaxshisi ham, yomoni ham.",
+  "author": null
+ },
+ {
+  "text": "Sabr qil. Eng yaxshi narsalar sekin keladi.",
+  "author": null
+ },
+ {
+  "text": "Sevgi gapda emas, qilgan ishda ko'rinadi.",
+  "author": null
+ },
+ {
+  "text": "Odamlar o'zgarmaydi, sen ularni to'g'ri taniy boshlaysan.",
+  "author": null
+ },
+ {
+  "text": "Jimlik baqirishdan kuchli bo'lgan paytlar bor.",
+  "author": null
+ },
+ {
+  "text": "O'zingni boshqalarga isbotlashing shart emas.",
+  "author": null
+ },
+ {
+  "text": "Bugun nima qilsang, ertangi kuningni shu yaratadi.",
+  "author": null
+ },
+ {
+  "text": "Qo'rquv — vaqtincha, pushaymon — abadiy.",
+  "author": null
+ },
+ {
+  "text": "Boshlash uchun hech qachon kech emas.",
+  "author": null
+ },
+ {
+  "text": "Bu kunlar ham o'tib ketadi.",
+  "author": null
+ },
+ {
+  "text": "Sukut ham bir javob.",
+  "author": null
+ },
+ {
+  "text": "Tashqi narsalar sizni og'ritsa, bu ularning o'zi emas, ular haqidagi hukmingizdir.",
+  "author": "Mark Avreliy"
+ },
+ {
+  "text": "Hayot — agar uni qanday ishlatishni bilsang, uzoq.",
+  "author": "Seneka"
+ },
+ {
+  "text": "Hayotdagi eng yumshoq narsa eng qattiq narsani yengadi.",
+  "author": "Lao Szi"
+ },
+ {
+  "text": "Ta'limning ildizi achchiq, mevasi shirin.",
+  "author": "Aristotel"
+ },
+ {
+  "text": "Men faqat bir narsani bilaman: hech narsani bilmasligimni.",
+  "author": "Sokrat"
+ },
+ {
+  "text": "Inson hamma narsaga ko'nikadigan jonzotdir.",
+  "author": "Fyodor Dostoyevskiy"
+ },
+ {
+  "text": "Qisqalik — iste'dodning singlisi.",
+  "author": "Anton Chexov"
+ },
+ {
+  "text": "Qish o'rtasida men o'zimda o'chmas yoz borligini bildim.",
+  "author": "Alber Kamyu"
+ },
+ {
+  "text": "Dunyo hammani sindiradi, keyin ko'pchilik sinuvchi joyida kuchli bo'ladi.",
+  "author": "Ernest Xeminguey"
+ },
+ {
+  "text": "Yaxshi bilan yursang, yetarsan murodga,\nyomon bilan yursang, qolarsan uyatga.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Tig' yarasi bitar, til yarasi bitmas.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Nodon do'stdan dono dushman yaxshi.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Ko'rpangga qarab oyoq uzat.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Oz-oz o'rganib dono bo'lur,\nqatra-qatra yig'ilib daryo bo'lur.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Qanoat — tugamas boylik.",
+  "author": "Xalq maqoli"
+ },
+ {
+  "text": "Boshlash uchun mukammal bo'lish shart emas, lekin mukammal bo'lish uchun boshlash shart.",
+  "author": null
+ },
+ {
+  "text": "Bugun og'ir bo'lsa, ertaga yengilroq bo'ladi. Faqat taslim bo'lma.",
+  "author": null
+ },
+ {
+  "text": "Orzu qilish — boshlanish, harakat qilish — yo'l.",
+  "author": null
+ },
+ {
+  "text": "Katta natijalar kichik odatlardan boshlanadi.",
+  "author": null
+ },
+ {
+  "text": "Har kuni bir qadam — bir yilda uzoq yo'l.",
+  "author": null
+ },
+ {
+  "text": "Hech kim senga kuch bermaydi, u sening ichingda.",
+  "author": null
+ },
+ {
+  "text": "Qiyin bo'lgani uchun to'xtama, qiyin bo'lgani uchun davom et.",
+  "author": null
+ },
+ {
+  "text": "Eng yaxshi o'qituvchi — xatolar.",
+  "author": null
+ },
+ {
+  "text": "Bugungi mehnating — ertangi minnatdorchiliging.",
+  "author": null
+ },
+ {
+  "text": "O'zingni boshqalar bilan emas, kechagi o'zing bilan solishtir.",
+  "author": null
+ },
+ {
+  "text": "Sekin bo'lsa ham oldinga yur.",
+  "author": null
+ },
+ {
+  "text": "Mashaqqatsiz hech narsa kelmaydi.",
+  "author": null
+ },
+ {
+  "text": "Taslim bo'lish oson, davom etish — jasorat.",
+  "author": null
+ },
+ {
+  "text": "Qachon yiqilganingni emas, qanday turganingni eslashadi.",
+  "author": null
+ },
+ {
+  "text": "Imkoniyat kutma, uni o'zing yarat.",
+  "author": null
+ },
+ {
+  "text": "Kim harakat qilsa, o'sha yutadi.",
+  "author": null
+ },
+ {
+  "text": "Muvaffaqiyat — har kuni takrorlanadigan kichik harakatlar yig'indisi.",
+  "author": null
+ },
+ {
+  "text": "Hali hammasi oldinda.",
+  "author": null
+ },
+ {
+  "text": "Qiyinchilik seni sindirish uchun emas, shakllantirish uchun keladi.",
+  "author": null
+ },
+ {
+  "text": "O'zing uchun ishla, boshqa birov uchun emas.",
+  "author": null
+ },
+ {
+  "text": "Birinchi qadam eng qiyin, keyingilari odatga aylanadi.",
+  "author": null
+ },
+ {
+  "text": "Hech kim tug'ilganda ustoz bo'lmaydi.",
+  "author": null
+ },
+ {
+  "text": "Bugun boshla. Ertaga bugundan keyin keladi.",
+  "author": null
+ },
+ {
+  "text": "Intizom — motivatsiya yo'qolganda ham ishlay olish.",
+  "author": null
+ },
+ {
+  "text": "Katta orzu uchun katta sabr kerak.",
+  "author": null
+ },
+ {
+  "text": "To'siq uchrasa, demak sen harakatdasan.",
+  "author": null
+ },
+ {
+  "text": "Natija kech kelishi mumkin, lekin keladi.",
+  "author": null
+ },
+ {
+  "text": "Qo'rquvni his qilib ham harakat qilish — jasorat.",
+  "author": null
+ },
+ {
+  "text": "Sening vaqting keladi. Tayyor bo'lib tur.",
+  "author": null
+ },
+ {
+  "text": "Hamma yiqiladi, farq — kim turishida.",
+  "author": null
+ },
+ {
+  "text": "Kichik g'alabalarni ham nishonla.",
+  "author": null
+ },
+ {
+  "text": "Orqaga qaytma, sen allaqachon uzoq yo'l bosding.",
+  "author": null
+ },
+ {
+  "text": "Kuchli odam shikoyat qilmaydi, yo'l izlaydi.",
+  "author": null
+ },
+ {
+  "text": "Ishonch — harakatning birinchi qadami.",
+  "author": null
+ },
+ {
+  "text": "Eng katta xavf — hech narsa qilmaslik.",
+  "author": null
+ },
+ {
+  "text": "O'zingga vaqt ajrat, u eng yaxshi sarmoya.",
+  "author": null
+ },
+ {
+  "text": "Bugun nima uchun uyg'onganingni unutma.",
+  "author": null
+ },
+ {
+  "text": "Qiyin kunning ham oxiri bor.",
+  "author": null
+ },
+ {
+  "text": "Yomg'irdan keyin quyosh chiqadi.",
+  "author": null
+ },
+ {
+  "text": "Sabr qilgan odam yutqazmaydi, faqat kechikadi.",
+  "author": null
+ },
+ {
+  "text": "Ba'zi javoblar vaqt o'tib keladi.",
+  "author": null
+ },
+ {
+  "text": "Hammasi o'tadi, tajriba qoladi.",
+  "author": null
+ },
+ {
+  "text": "Kuting, hozirgi og'ir kunlar kelajak kuchingiz bo'ladi.",
+  "author": null
+ },
+ {
+  "text": "Tun qanchalik qorong'u bo'lmasin, tong albatta keladi.",
+  "author": null
+ },
+ {
+  "text": "Og'ir damlarda ham shukr qilishni unutma.",
+  "author": null
+ },
+ {
+  "text": "Hamma narsa o'z o'rniga tushadi.",
+  "author": null
+ },
+ {
+  "text": "Dard — o'sishning narxi.",
+  "author": null
+ },
+ {
+  "text": "Sinov — kuchli bo'lish uchun berilgan imkoniyat.",
+  "author": null
+ },
+ {
+  "text": "Hayot sekin, lekin to'g'ri o'rgatadi.",
+  "author": null
+ },
+ {
+  "text": "Hech narsa abadiy emas: na dard, na tashvish.",
+  "author": null
+ },
+ {
+  "text": "Yiqilganing — falokat emas, tajriba.",
+  "author": null
+ },
+ {
+  "text": "Qiyin damlarda kim yoningda ekanini ko'rasan.",
+  "author": null
+ },
+ {
+  "text": "Dilingdagi dardni vaqt davolaydi.",
+  "author": null
+ },
+ {
+  "text": "Ba'zan to'xtab nafas olish ham yutuq.",
+  "author": null
+ },
+ {
+  "text": "Boshingga tushganning hammasi bir kun hikoyaga aylanadi.",
+  "author": null
+ },
+ {
+  "text": "Charchasang dam ol, taslim bo'lma.",
+  "author": null
+ },
+ {
+  "text": "Eng yaxshi kunlar hali kelmagan.",
+  "author": null
+ },
+ {
+  "text": "Qiyin bo'lsa, demak o'sayapsan.",
+  "author": null
+ },
+ {
+  "text": "Yig'lash zaiflik emas, bu yurakning tozalanishi.",
+  "author": null
+ },
+ {
+  "text": "Sog'inch — seni unutmaganning belgisi.",
+  "author": null
+ },
+ {
+  "text": "Uzoqda bo'lsang ham, yuragimdasan.",
+  "author": null
+ },
+ {
+  "text": "Sevgi — jimgina qilingan g'amxo'rlik.",
+  "author": null
+ },
+ {
+  "text": "Sevgan odam yonida bo'lsa, har kun bayram.",
+  "author": null
+ },
+ {
+  "text": "Haqiqiy muhabbat shovqinsiz bo'ladi.",
+  "author": null
+ },
+ {
+  "text": "Kimdir seni kutayotgan bo'lsa, bu eng katta boylik.",
+  "author": null
+ },
+ {
+  "text": "Sevgi — kechirish, sabr va ishonch.",
+  "author": null
+ },
+ {
+  "text": "Odamni sevish — uni tushunishga urinish.",
+  "author": null
+ },
+ {
+  "text": "Ba'zi odamlar hayotingga qisqa kirib, uzoq iz qoldiradi.",
+  "author": null
+ },
+ {
+  "text": "Muhabbat gapda emas, e'tiborda ko'rinadi.",
+  "author": null
+ },
+ {
+  "text": "Yurak so'ramaydi, shunchaki yaxshi ko'radi.",
+  "author": null
+ },
+ {
+  "text": "Yo'q, seni unutmadim, shunchaki jim qoldim.",
+  "author": null
+ },
+ {
+  "text": "Kutish ham muhabbatning bir ko'rinishi.",
+  "author": null
+ },
+ {
+  "text": "Sevgi bor joyda uy bor.",
+  "author": null
+ },
+ {
+  "text": "Ba'zan bir og'iz iliq so'z butun kunni yaxshi qiladi.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi insonni topish — omad, saqlab qolish — san'at.",
+  "author": null
+ },
+ {
+  "text": "Seni tushunadigan bitta odam — butun dunyoga arziydi.",
+  "author": null
+ },
+ {
+  "text": "Onani xursand qilgan odam hech qachon yutqazmaydi.",
+  "author": null
+ },
+ {
+  "text": "Ota — ko'rinmas tayanch.",
+  "author": null
+ },
+ {
+  "text": "Ota-onaga qilingan yaxshilik hech qachon yo'qolmaydi.",
+  "author": null
+ },
+ {
+  "text": "Ona qo'li tekkan taom — eng mazali taom.",
+  "author": null
+ },
+ {
+  "text": "Oila — eng yaxshi boshpana.",
+  "author": null
+ },
+ {
+  "text": "Ota-onang tirikligida ularni ko'proq quvontir.",
+  "author": null
+ },
+ {
+  "text": "Aka-uka — bir-biriga eng yaqin tayanch.",
+  "author": null
+ },
+ {
+  "text": "Opa-singil — eng yaxshi do'stlar.",
+  "author": null
+ },
+ {
+  "text": "Bola kulgisi — eng chiroyli musiqa.",
+  "author": null
+ },
+ {
+  "text": "Baraka oilada, mehr dilda.",
+  "author": null
+ },
+ {
+  "text": "Uyingda tinchlik bo'lsa, qolgan hamma narsa ikkinchi darajali.",
+  "author": null
+ },
+ {
+  "text": "Ona — dunyodagi eng sof mehr.",
+  "author": null
+ },
+ {
+  "text": "Onaning ko'z yoshi — eng og'ir yuk.",
+  "author": null
+ },
+ {
+  "text": "Do'st — qiyin kunda yoningda turgan odam.",
+  "author": null
+ },
+ {
+  "text": "Ko'p do'st emas, haqiqiy do'st kerak.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi do'st — hayotning eng katta sovg'asi.",
+  "author": null
+ },
+ {
+  "text": "Do'stlik gapda emas, ishda sinaladi.",
+  "author": null
+ },
+ {
+  "text": "Do'stingni yaxshi ko'r, lekin haqiqatni ayt.",
+  "author": null
+ },
+ {
+  "text": "Kimdir sen uchun vaqt topsa, u senga qadr beradi.",
+  "author": null
+ },
+ {
+  "text": "Odamlarning soni emas, sifati muhim.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi do'st — yig'laganda ham kuldiradigan odam.",
+  "author": null
+ },
+ {
+  "text": "Sadoqat — eng noyob fazilat.",
+  "author": null
+ },
+ {
+  "text": "Haqiqiy do'stlar yillar bilan emas, lahzalar bilan sinaladi.",
+  "author": null
+ },
+ {
+  "text": "Vaqt — eng qimmat boylik, uni qaytarib bo'lmaydi.",
+  "author": null
+ },
+ {
+  "text": "Bugun — hayotingning eng yosh kuni.",
+  "author": null
+ },
+ {
+  "text": "Hayot — kutish emas, yashash.",
+  "author": null
+ },
+ {
+  "text": "Vaqtni sarflama, sarmoya qil.",
+  "author": null
+ },
+ {
+  "text": "Hayot qisqa, lekin ma'noli bo'lsa, yetarli.",
+  "author": null
+ },
+ {
+  "text": "Kecha — o'tdi, ertaga — noma'lum, bugun — sovg'a.",
+  "author": null
+ },
+ {
+  "text": "Yashaganing emas, qanday yashaganing muhim.",
+  "author": null
+ },
+ {
+  "text": "Dunyoga kelib, kamida bitta yaxshi iz qoldir.",
+  "author": null
+ },
+ {
+  "text": "Vaqt — eng halol ustoz.",
+  "author": null
+ },
+ {
+  "text": "Hayot go'zal, agar unga go'zal ko'z bilan qarasang.",
+  "author": null
+ },
+ {
+  "text": "Soatga emas, o'z yuragingga quloq sol.",
+  "author": null
+ },
+ {
+  "text": "Eng yaxshi payt — hozir.",
+  "author": null
+ },
+ {
+  "text": "Umr o'tadi, qilingan ishlar qoladi.",
+  "author": null
+ },
+ {
+  "text": "Hayotni murakkablashtirma, oddiy narsalardan quvon.",
+  "author": null
+ },
+ {
+  "text": "Bir kun kelib hammasi xotiraga aylanadi.",
+  "author": null
+ },
+ {
+  "text": "Xotiralar — hayotning eng chiroyli albomi.",
+  "author": null
+ },
+ {
+  "text": "Hayot ba'zan sekinlashtiradi, bu to'xtab o'ylash uchun.",
+  "author": null
+ },
+ {
+  "text": "O'tgan narsaga yig'lama, kelayotganiga tayyorlan.",
+  "author": null
+ },
+ {
+  "text": "Har bir tong — yangi imkoniyat.",
+  "author": null
+ },
+ {
+  "text": "Quyosh har kuni chiqadi, sen ham qaytadan boshlashing mumkin.",
+  "author": null
+ },
+ {
+  "text": "Dunyo tez, lekin sen shoshilma.",
+  "author": null
+ },
+ {
+  "text": "Hayotning eng yaxshi daqiqalari rejalashtirilmagan bo'ladi.",
+  "author": null
+ },
+ {
+  "text": "Faqat yashama, hayotdan zavq ol.",
+  "author": null
+ },
+ {
+  "text": "Bugun sening kuning, unga loyiq bo'l.",
+  "author": null
+ },
+ {
+  "text": "Shukr — baxtning eng oson yo'li.",
+  "author": null
+ },
+ {
+  "text": "Bor narsangga shukr qil, yo'q narsangga ortiqcha qayg'urma.",
+  "author": null
+ },
+ {
+  "text": "Tinch yurak — eng katta boylik.",
+  "author": null
+ },
+ {
+  "text": "Baxt — oddiy narsalarni qadrlay olishda.",
+  "author": null
+ },
+ {
+  "text": "Ichki tinchlik hamma narsadan qimmat.",
+  "author": null
+ },
+ {
+  "text": "Kamtarlik — buyuklikning belgisi.",
+  "author": null
+ },
+ {
+  "text": "Boshqalarga yaxshilik qil, o'zingga yaxshilik qaytadi.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi niyat — yarim yo'l.",
+  "author": null
+ },
+ {
+  "text": "Chiroyli so'z — chiroyli yuz.",
+  "author": null
+ },
+ {
+  "text": "Halollik — eng qimmat boylik.",
+  "author": null
+ },
+ {
+  "text": "Ko'zingni yum va nafas ol: hammasi joyida.",
+  "author": null
+ },
+ {
+  "text": "Katta quvonch kichik narsalardan boshlanadi.",
+  "author": null
+ },
+ {
+  "text": "Odamni qadrlash uchun uni yo'qotishni kutma.",
+  "author": null
+ },
+ {
+  "text": "Sening tabassuming kimningdir kunini o'zgartirishi mumkin.",
+  "author": null
+ },
+ {
+  "text": "Kechirish — o'zing uchun qilingan sovg'a.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi odamlar yaxshiliklarini hisoblamaydi.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi kayfiyat — o'zing yaratgan holat.",
+  "author": null
+ },
+ {
+  "text": "Boshqalar nima desa desin, vijdoning toza bo'lsin.",
+  "author": null
+ },
+ {
+  "text": "Ko'p narsani tushuntirma: kimdir tushunadi, kimdir yo'q.",
+  "author": null
+ },
+ {
+  "text": "O'zingni qadrlamasang, boshqalar ham qadrlamaydi.",
+  "author": null
+ },
+ {
+  "text": "Hamma bilan do'st bo'lish shart emas, hamma bilan hurmatli bo'lish yetarli.",
+  "author": null
+ },
+ {
+  "text": "Yaxshi ko'rmaganlarga e'tibor berma, yaxshi ko'rganlarga vaqt ajrat.",
+  "author": null
+ },
+ {
+  "text": "Hurmat so'ralmaydi, u qozoniladi.",
+  "author": null
+ },
+ {
+  "text": "Jim bo'lish — kuch, bahsga kirmaslik — aql.",
+  "author": null
+ },
+ {
+  "text": "Har kimga izoh berish shart emas.",
+  "author": null
+ },
+ {
+  "text": "Kimdir ketsa, yangi yaxshi odamga joy bo'shaydi.",
+  "author": null
+ },
+ {
+  "text": "O'zingni yo'qotib, boshqani topma.",
+  "author": null
+ },
+ {
+  "text": "Yaxshilik qilsang, javob kutma.",
+  "author": null
+ },
+ {
+  "text": "Ko'p gapirgan emas, to'g'ri gapirgan yutadi.",
+  "author": null
+ },
+ {
+  "text": "Boshqalarning fikri sening haqiqating emas.",
+  "author": null
+ },
+ {
+  "text": "Tong otganda hamma narsa yangi.",
+  "author": null
+ },
+ {
+  "text": "Kechqurungi jimjitlik — dilga dam.",
+  "author": null
+ },
+ {
+  "text": "Yulduzlar qorong'ulikda ko'rinadi.",
+  "author": null
+ },
+ {
+  "text": "Yomg'ir ovozi — yurakning tinchlanishi.",
+  "author": null
+ },
+ {
+  "text": "Shahar uxlaydi, o'ylar uyg'oq.",
+  "author": null
+ },
+ {
+  "text": "Tun — o'ylar vaqti, tong — harakat vaqti.",
+  "author": null
+ },
+ {
+  "text": "Bahor — qalbning ham yangilanishi.",
+  "author": null
+ },
+ {
+  "text": "Kuz — sekin yashashni o'rgatadi.",
+  "author": null
+ },
+ {
+  "text": "Qish — tinchlik va umidning mavsumi.",
+  "author": null
+ },
+ {
+  "text": "Quyosh botadi, lekin hech qachon yo'qolmaydi.",
+  "author": null
+ },
+ {
+  "text": "Tog'lar balandligidan emas, mustahkamligidan ulug'.",
+  "author": null
+ },
+ {
+  "text": "Daryo to'xtamay oqadi, hayot ham shunday.",
+  "author": null
+ },
+ {
+  "text": "Yulduz ham qorong'ida porlaydi.",
+  "author": null
+ },
+ {
+  "text": "Bulutlar ortida quyosh doim bor.",
+  "author": null
+ },
+ {
+  "text": "Pul — vosita, maqsad emas.",
+  "author": null
+ },
+ {
+  "text": "Halol topgan non — eng shirin non.",
+  "author": null
+ },
+ {
+  "text": "Sabr va mehnat — muvaffaqiyatning ikki qanoti.",
+  "author": null
+ },
+ {
+  "text": "Bilim — hech qachon o'g'irlanmaydigan boylik.",
+  "author": null
+ },
+ {
+  "text": "Har kuni yangi narsa o'rgan.",
+  "author": null
+ },
+ {
+  "text": "Kitob — eng sodiq do'st.",
+  "author": null
+ },
+ {
+  "text": "Ilm olish uchun yosh yo'q.",
+  "author": null
+ },
+ {
+  "text": "Tajriba — eng qimmat, lekin eng foydali ustoz.",
+  "author": null
+ },
+ {
+  "text": "Ish insonni go'zal qiladi.",
+  "author": null
+ }
 ]
