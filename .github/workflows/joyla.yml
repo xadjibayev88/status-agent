@@ -2,10 +2,15 @@ name: Status joylash
 
 on:
   schedule:
-    # Toshkent vaqti (UTC+5): 09:00, 14:00, 19:30, 22:30
-    - cron: "0 4 * * *"
+    # Toshkent vaqti (UTC+5): 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 19:30, 21:00, 22:30
+    - cron: "0 3 * * *"
+    - cron: "0 5 * * *"
+    - cron: "0 7 * * *"
     - cron: "0 9 * * *"
+    - cron: "0 11 * * *"
+    - cron: "0 13 * * *"
     - cron: "30 14 * * *"
+    - cron: "0 16 * * *"
     - cron: "30 17 * * *"
   workflow_dispatch:
     inputs:
@@ -13,6 +18,10 @@ on:
         description: "Faqat video yasash (Instagramga joylamasdan)"
         type: boolean
         default: true
+
+concurrency:
+  group: joyla
+  cancel-in-progress: false
 
 jobs:
   joyla:
