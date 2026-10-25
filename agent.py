@@ -853,12 +853,16 @@ def ig_joyla(cfg, video, caption):
 def story_kerakmi(cfg):
     """Kuniga 9 ta joylashdan ~6 tasi story'ga ham chiqadi (story_ulushi: 3 tadan 2 tasi)."""
     if cfg.get("story", True) is False:
+        log("Story o'chirilgan (config: story=false)")
         return False
+    if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+        return True  # qo'lda ishga tushirganda har doim story ham joylanadi
     har, nechta = cfg.get("story_ulushi", [2, 3])
     n = os.environ.get("GITHUB_RUN_NUMBER")
-    if n and n.isdigit():
-        return int(n) % nechta < har
-    return random.random() < har / nechta
+    ha = int(n) % nechta < har if (n and n.isdigit()) else random.random() < har / nechta
+    if not ha:
+        log(f"Bu safar story navbati emas (har {nechta} ta Reels'dan {har} tasi story'ga chiqadi)")
+    return ha
 
 
 # ---------- asosiy oqim ----------

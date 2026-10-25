@@ -99,8 +99,10 @@ def main():
         log(f"Postlarni o'qib bo'lmadi: {media['error'].get('message')}")
         return
 
-    yozildi = 0
-    for m in media.get("data", []):
+    yozildi = jami = oldin = 0
+    postlar = media.get("data", [])
+    log(f"Akkaunt: @{mening}, tekshiriladigan Reels: {len(postlar)} ta")
+    for m in postlar:
         r = requests.get(f"{api}/{m['id']}/comments", headers=hdr, timeout=30,
                          params={"fields": "id,text,username,replies{username}", "limit": 50}).json()
         if "error" in r:
@@ -112,11 +114,16 @@ def main():
                     "(ruxsatlar ro'yxatida comments belgilangan bo'lsin) va IG_ACCESS_TOKEN secretini yangilang.")
                 return
             continue
-        for c in r.get("data", []):
+        izohlar = r.get("data", [])
+        if izohlar:
+            log(f"  Post {m['id']}: {len(izohlar)} ta izoh")
+        for c in izohlar:
             if (c.get("username") or "").lower() == mening:
                 continue
+            jami += 1
             javoblar = (c.get("replies") or {}).get("data", [])
             if any((x.get("username") or "").lower() == mening for x in javoblar):
+                oldin += 1
                 continue
             matn = javob_tanla(c.get("text"), cfg)
             p = requests.post(f"{api}/{c['id']}/replies", headers=hdr,
@@ -130,7 +137,11 @@ def main():
                 log(f"Limitga yetildi ({max_javob}), qolganlari keyingi safar.")
                 return
             time.sleep(random.uniform(4, 9))  # spamga o'xshamasligi uchun
-    log(f"Faollik agenti tugadi: {yozildi} ta izohga javob yozildi.")
+    log(f"Faollik agenti tugadi: begona izohlar {jami} ta, oldin javob berilgan {oldin} ta, "
+        f"hozir javob yozildi {yozildi} ta.")
+    if jami == 0:
+        log("Izoh topilmadi. Agar videolaringizda boshqalarning izohi bo'lsa-yu bu yerda 0 chiqsa, "
+            "Meta ilovasi 'Development' rejimida bo'lgani uchun begona izohlar ko'rinmayotgan bo'lishi mumkin.")
 
 
 if __name__ == "__main__":
