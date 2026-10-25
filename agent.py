@@ -94,7 +94,17 @@ def save_state(st):
 
 # ---------- matn tanlash ----------
 def tanla_matn(st):
-    baza = load_json(BASE / "matnlar.json", [])
+    try:
+        baza = load_json(BASE / "matnlar.json", [])
+    except json.JSONDecodeError:
+        # nusxa olishda boshidagi "[" yoki oxiridagi "]" tushib qolgan bo'lsa, tuzatamiz
+        s = (BASE / "matnlar.json").read_text(encoding="utf-8").strip().rstrip(",")
+        if not s.startswith("["):
+            s = "[" + s
+        if not s.endswith("]"):
+            s = s.rstrip(",") + "]"
+        baza = json.loads(s)
+        log("matnlar.json biroz buzilgan edi, avtomatik tuzatildi")
     if not baza:
         sys.exit("matnlar.json bo'sh.")
     run = os.environ.get("GITHUB_RUN_NUMBER")
