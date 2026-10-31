@@ -183,24 +183,25 @@ def strip_yasa(text, font, fill, h, out):
 
 def katlamlar_yasa(q, cfg):
     """Har qator alohida paydo bo'ladi. Qaytaradi: [(png, y, boshlanish)], davomiylik."""
-    qpath = find_font(["cormorant", "playfair", "garamond"], SERIF_SYS)
+    qpath = find_font(["semibold", "cormorant", "playfair", "garamond"], SERIF_SYS)
+    ipath = find_font(["italic"], SERIF_SYS) or qpath
     spath = find_font(["montserrat"], SANS_SYS)
     probe = ImageDraw.Draw(Image.new("RGBA", (W, H)))
-    size = 76
+    size = 88
     while True:
         font = load_font(qpath, size)
         lines = wrap(probe, q["text"], font, W - 220)
-        if len(lines) <= 6 or size <= 40:
+        if len(lines) <= 6 or size <= 48:
             break
         size -= 4
-    lh = int(size * 1.3)
+    lh = int(size * 1.22)
     author = q.get("author")
     mark_h = 110
     total = mark_h + len(lines) * lh + (110 if author else 0)
     y = int(H * 0.45 - total / 2)
     out = BASE / "chiqish"
     layers = []
-    scrim_yasa(y - 200, y + total + 200, out / "_scrim.png")
+    scrim_yasa(y - 220, y + total + 220, out / "_scrim.png", alpha=96, blur=160)
     layers.append((out / "_scrim.png", 0, 0.2, None, 0.8))
 
     def add(name, text, f, fill, yy, h, start):
@@ -221,11 +222,11 @@ def katlamlar_yasa(q, cfg):
         rp = out / "_rule.png"
         rule.save(rp)
         layers.append((rp, yy + 18, t_end + 0.2, None, 0.9))
-        add("author", "\u2014 " + author, load_font(spath, 34), "#D9D5CC", yy + 40, 70, t_end + 0.7)
+        add("author", author, load_font(ipath, 46), "#E8D9B5", yy + 40, 80, t_end + 0.7)
         last = t_end + 0.7
     handle = cfg.get("kanal_nomi", "")
     if handle:
-        add("handle", handle, load_font(spath, 34), "#FFFFFFB4", H - 380, 70, 2.0)
+        add("handle", handle, load_font(spath, 30), "#FFFFFF9A", H - 360, 64, 2.0)
     dur = last + 0.9 + 6 + len(q["text"]) * 0.03 + random.uniform(0, 3)
     dur = round(max(10.0, min(30.0, dur)), 1)
     return layers, dur
@@ -564,7 +565,7 @@ def musiqa_katlamlar(q, cfg, music):
     log(f"Qo'shiq {md:.0f} soniya -> video {dur} soniya" + (" (butun qo'shiq)" if tam else ""))
 
     spath = find_font(["montserrat"], SANS_SYS)
-    qpath = find_font(["cormorant", "playfair", "garamond"], SERIF_SYS)
+    qpath = find_font(["semibold", "cormorant", "playfair", "garamond"], SERIF_SYS)
     probe = ImageDraw.Draw(Image.new("RGBA", (W, H)))
     out = BASE / "chiqish"
     layers = []
@@ -573,6 +574,9 @@ def musiqa_katlamlar(q, cfg, music):
     nl = 3 if cues else 6
     scrim_yasa(y_sub - 220, y_sub + nl * 62 + 220, out / "_scrim.png")
     layers.append((out / "_scrim.png", 0, 0.2, None, 0.8))
+    if not cues:  # subtitr yo'q: iqtibos qator-qator paydo bo'ladigan chiroyli ko'rinishda
+        layers, _ = katlamlar_yasa(q, cfg)
+        return layers, dur, start, (0.4 if tam else 1.5)
     if cues:
         font = load_font(spath, 44)
         lst, pad, n = subtitr_trek(cues, start, dur, font, probe, out)
@@ -634,10 +638,12 @@ def video_yasa(q, cfg):
         cmd += ["-f", "lavfi", "-i", ambient_input(dur + 1)]
         log("Musiqa: ichki yumshoq fon musiqasi")
 
+    pan = (",scale=1166:2074,crop=1080:1920:x='(iw-ow)/2*(1+0.8*sin(t/9))':y='(ih-oh)/2*(1+0.8*cos(t/11))'"
+           if is_video else "")
     zoom = "" if is_video else (",zoompan=z='min(1+0.0006*on,1.25)':x='iw/2-(iw/zoom/2)'"
                                 ":y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30")
     f = ["[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
-         "eq=saturation=1.12:contrast=1.04" + zoom + ",setsar=1[v0]"]
+         "eq=saturation=1.06:contrast=1.05:brightness=-0.02" + zoom + pan + ",vignette=PI/4.6,setsar=1[v0]"]
     for i, (pth, y, st, en, fin) in enumerate(layers, 1):
         if str(pth).endswith(".txt"):
             f.append(f"[{i}:v]fps=30,format=rgba[s{i}]")
