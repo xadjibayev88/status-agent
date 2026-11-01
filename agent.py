@@ -181,8 +181,15 @@ def strip_yasa(text, font, fill, h, out):
     return pad
 
 
+# Matn to'liq ko'rinadigan soniya: Instagram muqovasi (profil to'ridagi rasm) shu kadrdan olinadi.
+# Aks holda muqova 0-soniyadan olinib, to'rda matnsiz bo'sh tabiat ko'rinardi.
+MUQOVA_S = 2.0
+
+
 def katlamlar_yasa(q, cfg):
-    """Har qator alohida paydo bo'ladi. Qaytaradi: [(png, y, boshlanish)], davomiylik."""
+    """Matn videoning birinchi kadridan ko'rinadi, qatorlar tez ketma-ket ochiladi.
+    Qaytaradi: [(png, y, boshlanish, tugash, fade)], davomiylik."""
+    global MUQOVA_S
     qpath = find_font(["semibold", "cormorant", "playfair", "garamond"], SERIF_SYS)
     ipath = find_font(["italic"], SERIF_SYS) or qpath
     spath = find_font(["montserrat"], SANS_SYS)
@@ -202,18 +209,20 @@ def katlamlar_yasa(q, cfg):
     out = BASE / "chiqish"
     layers = []
     scrim_yasa(y - 220, y + total + 220, out / "_scrim.png", alpha=96, blur=160)
-    layers.append((out / "_scrim.png", 0, 0.2, None, 0.8))
+    layers.append((out / "_scrim.png", 0, 0.0, None, 0.15))
 
-    def add(name, text, f, fill, yy, h, start):
+    def add(name, text, f, fill, yy, h, start, fade=0.5):
         path = out / f"_{name}.png"
         pad = strip_yasa(text, f, fill, h, path)
-        layers.append((path, yy - pad, start, None, 0.9))
+        layers.append((path, yy - pad, start, None, fade))
 
-    add("mark", "\u201c", load_font(qpath, 150), "#F5F0E69A", y - 25, 210, 0.6)
-    t0 = 1.3
+    # Birinchi kadrdayoq qo'shtirnoq va 1-qator bor: lentada ham, muqovada ham bo'sh fon ko'rinmaydi
+    add("mark", "\u201c", load_font(qpath, 150), "#F5F0E69A", y - 25, 210, 0.0, 0.15)
+    t0, step = 0.0, 0.3
     for i, ln in enumerate(lines):
-        add(f"l{i}", ln, font, "#F5F0E6", y + mark_h + i * lh, lh + 30, t0 + i * 1.0)
-    t_end = t0 + len(lines) * 1.0
+        add(f"l{i}", ln, font, "#F5F0E6", y + mark_h + i * lh, lh + 30, t0 + i * step,
+            0.15 if i == 0 else 0.5)
+    t_end = t0 + len(lines) * step
     yy = y + mark_h + len(lines) * lh
     last = t_end
     if author:
@@ -221,12 +230,13 @@ def katlamlar_yasa(q, cfg):
         ImageDraw.Draw(rule).rectangle([W // 2 - 45, 8, W // 2 + 45, 10], fill="#D9D5CCB4")
         rp = out / "_rule.png"
         rule.save(rp)
-        layers.append((rp, yy + 18, t_end + 0.2, None, 0.9))
-        add("author", author, load_font(ipath, 46), "#E8D9B5", yy + 40, 80, t_end + 0.7)
-        last = t_end + 0.7
+        layers.append((rp, yy + 18, t_end + 0.1, None, 0.5))
+        add("author", author, load_font(ipath, 46), "#E8D9B5", yy + 40, 80, t_end + 0.3)
+        last = t_end + 0.3
     handle = cfg.get("kanal_nomi", "")
     if handle:
-        add("handle", handle, load_font(spath, 30), "#FFFFFF9A", H - 360, 64, 2.0)
+        add("handle", handle, load_font(spath, 30), "#FFFFFF9A", H - 360, 64, 0.5)
+    MUQOVA_S = round(max(last, 0.5) + 0.8, 2)
     dur = last + 0.9 + 6 + len(q["text"]) * 0.03 + random.uniform(0, 3)
     dur = round(max(10.0, min(30.0, dur)), 1)
     return layers, dur
@@ -589,7 +599,7 @@ def musiqa_katlamlar(q, cfg, music):
             lines = lines + ["— " + q["author"]]
         path = out / "_status.png"
         pad, _ = block_yasa(lines, font, "#F5F0E6EB", path)
-        layers.append((path, y_sub - pad, 1.5, None, 1.5))
+        layers.append((path, y_sub - pad, 0.0, None, 0.4))
     handle = cfg.get("kanal_nomi", "")
     if handle:
         hp = out / "_handle.png"
@@ -850,8 +860,10 @@ def ig_joyla(cfg, video, caption):
     url, tozala = video_yukla(cfg, video)
     log("Video vaqtincha internetga yuklandi")
     try:
+        # thumb_offset (ms): muqova matn to'liq ko'ringan kadrdan olinadi
         res = joyla({"media_type": "REELS", "video_url": url,
-                     "caption": caption, "share_to_feed": "true"})
+                     "caption": caption, "share_to_feed": "true",
+                     "thumb_offset": str(int(MUQOVA_S * 1000))})
         log(f"✅ Reels joylandi: {res}")
         if story_kerakmi(cfg):
             if media_duration(video) > 60:
