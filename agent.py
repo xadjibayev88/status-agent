@@ -569,7 +569,7 @@ def musiqa_katlamlar(q, cfg, music):
             lines = lines + ["— " + q["author"]]
         path = out / "_status.png"
         pad, _ = block_yasa(lines, font, "#F5F0E6EB", path)
-        layers.append((path, y_sub - pad, 0.0, None, 0.4))
+        layers.append((path, y_sub - pad, 0.0, None, 0.0))
     handle = cfg.get("kanal_nomi", "")
     if handle:
         hp = out / "_handle.png"
