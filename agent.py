@@ -22,6 +22,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageStat
 
+import stillar
+
 BASE = Path(__file__).resolve().parent
 W, H = 1080, 1920
 for _d in ("fonts", "fon_videolar", "musiqalar", "chiqish"):
@@ -85,6 +87,7 @@ def load_state():
     st.setdefault("ishlatilgan", [])
     st.setdefault("bajarilgan", [])
     st.setdefault("urinish", {})
+    st.setdefault("stillar", [])  # oxirgi Reels uslublari (takrorlanmasligi uchun)
     return st
 
 
@@ -186,60 +189,27 @@ def strip_yasa(text, font, fill, h, out):
 MUQOVA_S = 2.0
 
 
+STIL_NOMI = None   # bitta_status tanlaydi (yoki STIL muhit o'zgaruvchisi); None bo'lsa tasodifiy
+STIL = None        # oxirgi qurilgan uslub: video_yasa rang berish va kartani shu yerdan oladi
+
+
 def katlamlar_yasa(q, cfg):
-    """Matn videoning birinchi kadridan ko'rinadi, qatorlar tez ketma-ket ochiladi.
-    Qaytaradi: [(png, y, boshlanish, tugash, fade)], davomiylik."""
-    global MUQOVA_S
-    qpath = find_font(["semibold", "cormorant", "playfair", "garamond"], SERIF_SYS)
-    ipath = find_font(["italic"], SERIF_SYS) or qpath
-    spath = find_font(["montserrat"], SANS_SYS)
-    probe = ImageDraw.Draw(Image.new("RGBA", (W, H)))
-    size = 88
-    while True:
-        font = load_font(qpath, size)
-        lines = wrap(probe, q["text"], font, W - 220)
-        if len(lines) <= 6 or size <= 48:
-            break
-        size -= 4
-    lh = int(size * 1.22)
-    author = q.get("author")
-    mark_h = 110
-    total = mark_h + len(lines) * lh + (110 if author else 0)
-    y = int(H * 0.45 - total / 2)
-    out = BASE / "chiqish"
-    layers = []
-    scrim_yasa(y - 220, y + total + 220, out / "_scrim.png", alpha=96, blur=160)
-    layers.append((out / "_scrim.png", 0, 0.0, None, 0.15))
-
-    def add(name, text, f, fill, yy, h, start, fade=0.5):
-        path = out / f"_{name}.png"
-        pad = strip_yasa(text, f, fill, h, path)
-        layers.append((path, yy - pad, start, None, fade))
-
-    # Birinchi kadrdayoq qo'shtirnoq va 1-qator bor: lentada ham, muqovada ham bo'sh fon ko'rinmaydi
-    add("mark", "\u201c", load_font(qpath, 150), "#F5F0E69A", y - 25, 210, 0.0, 0.15)
-    t0, step = 0.0, 0.3
-    for i, ln in enumerate(lines):
-        add(f"l{i}", ln, font, "#F5F0E6", y + mark_h + i * lh, lh + 30, t0 + i * step,
-            0.15 if i == 0 else 0.5)
-    t_end = t0 + len(lines) * step
-    yy = y + mark_h + len(lines) * lh
-    last = t_end
-    if author:
-        rule = Image.new("RGBA", (W, 20), (0, 0, 0, 0))
-        ImageDraw.Draw(rule).rectangle([W // 2 - 45, 8, W // 2 + 45, 10], fill="#D9D5CCB4")
-        rp = out / "_rule.png"
-        rule.save(rp)
-        layers.append((rp, yy + 18, t_end + 0.1, None, 0.5))
-        add("author", author, load_font(ipath, 46), "#E8D9B5", yy + 40, 80, t_end + 0.3)
-        last = t_end + 0.3
-    handle = cfg.get("kanal_nomi", "")
-    if handle:
-        add("handle", handle, load_font(spath, 30), "#FFFFFF9A", H - 360, 64, 0.5)
-    MUQOVA_S = round(max(last, 0.5) + 0.8, 2)
+    """Uslub (stillar.py) bo'yicha matn qatlamlari. Matn videoning birinchi kadridan ko'rinadi.
+    Qaytaradi: [(png, y, boshlanish, tugash, fade, {x, rise})], davomiylik."""
+    global MUQOVA_S, STIL
+    fb = {"serif": find_font(["semibold", "cormorant", "playfair", "garamond"], SERIF_SYS),
+          "italic": find_font(["italic"], SERIF_SYS),
+          "sans": find_font(["montserrat"], SANS_SYS)}
+    fb["italic"] = fb["italic"] or fb["serif"]
+    nom = STIL_NOMI or stillar.tanla([])
+    STIL = stillar.build(nom, q["text"], q.get("author"), cfg.get("kanal_nomi", ""),
+                         BASE / "chiqish", BASE / "fonts", fb)
+    log(f"Uslub: {nom}")
+    MUQOVA_S = STIL["muqova"]
+    last = max([l[2] for l in STIL["layers"]] + [0.5])
     dur = last + 0.9 + 6 + len(q["text"]) * 0.03 + random.uniform(0, 3)
     dur = round(max(10.0, min(30.0, dur)), 1)
-    return layers, dur
+    return STIL["layers"], dur
 
 
 # ---------- fon: Pexels (bepul) / o'zingizning videolar / gradient ----------
@@ -609,6 +579,8 @@ def musiqa_katlamlar(q, cfg, music):
 
 
 def video_yasa(q, cfg):
+    global STIL
+    STIL = None  # davomli ishlaganda oldingi Reels uslubi qolib ketmasin
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out = BASE / "chiqish" / f"status_{ts}.mp4"
     music = musiqa_tanla()
@@ -630,12 +602,16 @@ def video_yasa(q, cfg):
         cmd += ["-stream_loop", "-1", "-t", d, "-i", str(bg)]
     else:
         cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(bg)]
+    card = STIL.get("card") if STIL else None
+    if card:  # shisha kartasi: yumaloq niqob (fon shu joyda xiralashadi)
+        cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(card[4])]
+    off = 1 + (1 if card else 0)  # fon (+ niqob) dan keyingi birinchi qatlam indeksi
     for path, *_ in layers:
         if str(path).endswith(".txt"):
             cmd += ["-f", "concat", "-safe", "0", "-i", str(path)]
         else:
             cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(path)]
-    ai = 1 + len(layers)
+    ai = off + len(layers)
     if music:
         if mstart is not None:
             start = mstart
@@ -652,18 +628,32 @@ def video_yasa(q, cfg):
            if is_video else "")
     zoom = "" if is_video else (",zoompan=z='min(1+0.0006*on,1.25)':x='iw/2-(iw/zoom/2)'"
                                 ":y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30")
+    grade = STIL["grade"] if STIL else "eq=saturation=1.06:contrast=1.05:brightness=-0.02"
+    finish = ("," + STIL["finish"]) if STIL and STIL.get("finish") else ""
     f = ["[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,"
-         "eq=saturation=1.06:contrast=1.05:brightness=-0.02" + zoom + pan + ",vignette=PI/4.6,setsar=1[v0]"]
-    for i, (pth, y, st, en, fin) in enumerate(layers, 1):
+         + grade + zoom + pan + ",vignette=PI/4.6,setsar=1" + ("[vb]" if card else finish + "[v0]")]
+    if card:
+        cx, cy, cw, ch, _m = card
+        f.append("[vb]split[va][vc]")
+        f.append(f"[vc]crop={cw}:{ch}:{cx}:{cy},gblur=sigma=34[vg]")
+        f.append("[1:v]format=gray,fps=30[vm]")
+        f.append("[vg][vm]alphamerge[vk]")
+        f.append(f"[va][vk]overlay={cx}:{cy}:format=auto{finish}[v0]")
+    for i, layer in enumerate(layers, off):
+        pth, y, st, en, fin = layer[:5]
+        opts = layer[5] if len(layer) > 5 else {}
+        j = i - off + 1  # zanjir bo'yicha tartib raqami (v1, v2, ...)
         if str(pth).endswith(".txt"):
-            f.append(f"[{i}:v]fps=30,format=rgba[s{i}]")
+            f.append(f"[{i}:v]fps=30,format=rgba[s{j}]")
         else:
-            fx = f"fade=t=in:st={st:.2f}:d={fin:.2f}:alpha=1"
+            fx = f"fade=t=in:st={st:.2f}:d={fin:.2f}:alpha=1" if fin > 0 else "null"
             if en:
                 fe = min(0.3, (en - st) / 3)
                 fx += f",fade=t=out:st={en - fe:.2f}:d={fe:.2f}:alpha=1"
-            f.append(f"[{i}:v]fps=30,format=rgba,{fx}[s{i}]")
-        f.append(f"[v{i - 1}][s{i}]overlay=0:{y}:format=auto[v{i}]")
+            f.append(f"[{i}:v]fps=30,format=rgba,{fx}[s{j}]")
+        rise = opts.get("rise", 0)
+        ye = (f"'{y}+{rise}*max(0,1-(t-{st:.2f})/{max(fin, 0.1):.2f})'" if rise else str(y))
+        f.append(f"[v{j - 1}][s{j}]overlay={opts.get('x', 0)}:{ye}:format=auto[v{j}]")
     f.append(f"[v{len(layers)}]fade=t=out:st={dur - 1.2:.2f}:d=1.2,format=yuv420p[v]")
     cmd += ["-filter_complex", ";".join(f), "-map", "[v]"]
     if music or ambient:
@@ -897,12 +887,19 @@ def story_kerakmi(cfg):
 def bitta_status(cfg, st, joylash):
     if joylash and not (cloud_parse(cfg) or (cfg.get("video_repo") and cfg.get("video_repo_token"))):
         raise RuntimeError("Secrets'da VIDEO_REPO_TOKEN va VIDEO_REPO yo'q: Instagram uchun vaqtincha havola kerak")
+    global STIL_NOMI
     q = tanla_matn(st)
     log(f"Matn: {q['text'][:50]!r} — {q.get('author')}")
+    forced = os.environ.get("STIL")
+    if forced and forced not in stillar.NAMES:
+        log(f"STIL={forced!r} noma'lum ({', '.join(stillar.NAMES)}), e'tiborsiz qoldirildi")
+        forced = None
+    STIL_NOMI = stillar.tanla(st["stillar"], forced, os.environ.get("GITHUB_RUN_NUMBER"))
     video = video_yasa(q, cfg)
     if joylash:
         ig_joyla(cfg, video, caption_yasa(q, cfg))
         st["ishlatilgan"].append(q["text"])
+        st["stillar"] = (st["stillar"] + [STIL_NOMI])[-10:]
         save_state(st)
     # eski videolarni tozalash (oxirgi 15 tasi qoladi)
     vids = sorted((BASE / "chiqish").glob("status_*.mp4"))
