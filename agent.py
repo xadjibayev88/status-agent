@@ -635,7 +635,7 @@ def video_yasa(q, cfg):
     if card:
         cx, cy, cw, ch, _m = card
         f.append("[vb]split[va][vc]")
-        f.append(f"[vc]crop={cw}:{ch}:{cx}:{cy},gblur=sigma=34[vg]")
+        f.append(f"[vc]crop={cw}:{ch}:{cx}:{cy},gblur=sigma=50[vg]")
         f.append("[1:v]format=gray,fps=30[vm]")
         f.append("[vg][vm]alphamerge[vk]")
         f.append(f"[va][vk]overlay={cx}:{cy}:format=auto{finish}[v0]")

@@ -22,6 +22,8 @@ SAFE_BOTTOM = 1380      # matn bloki shundan pastga tushmaydi
 HANDLE_Y = 1425         # @kanal: pastki 420 px (y > 1500) dan tashqarida
 MAX_LINES = 6
 MIN_SIZE = 32
+HARD_MIN_SIZE = 20     # 6 qatorga sig'masa ham xavfsiz zonada qolish uchun oxirgi chegara
+AUTHOR_PX, HANDLE_PX = 42, 34
 NAMES = ["klassik", "muharrir", "shisha", "kino", "mono", "romantik"]
 RECENT_AVOID = 3
 
@@ -101,17 +103,35 @@ def _wrap(text, f, maxw, track=0):
 
 
 def _fit(text, mk, size0, maxw, track_em, lh_mul, max_h):
-    """Qatorlar 6 tadan oshmasin va blok balandligi sig'sin: shrift kichrayadi."""
+    """Avval <= 6 qator va balandlikka sig'ish uchun shrift kichrayadi (MIN_SIZE gacha).
+    Baribir sig'masa, qatorlar 6 dan oshsa ham xavfsiz zonadan chiqmaydigan darajagacha kichraytiramiz."""
     size = size0
     while True:
         f = mk(size)
         tr = track_em * size
         lines = _wrap(text, f, maxw, tr)
         h = len(lines) * int(size * lh_mul)
-        ok = len(lines) <= MAX_LINES and h <= max_h and all(tlen(x, f, tr) <= maxw for x in lines)
-        if ok or size <= MIN_SIZE:
-            return f, lines, int(size * lh_mul), tr, size
+        fits = h <= max_h and all(tlen(x, f, tr) <= maxw for x in lines)
+        if (fits and len(lines) <= MAX_LINES) or size <= MIN_SIZE:
+            break
         size -= 4
+    while not fits and size > HARD_MIN_SIZE:
+        size -= 2
+        f = mk(size)
+        tr = track_em * size
+        lines = _wrap(text, f, maxw, tr)
+        h = len(lines) * int(size * lh_mul)
+        fits = h <= max_h and all(tlen(x, f, tr) <= maxw for x in lines)
+    return f, lines, int(size * lh_mul), tr, size
+
+
+def _author_font(fonts, name, weight, size, text, track, maxw, fallback):
+    """Muallif qatori kengligi maxw dan oshmasin (juda uzun ism bo'lsa shrift 30 gacha kichrayadi)."""
+    while True:
+        f = _font(fonts, name, size, weight, fallback)
+        if tlen(text, f, track) <= maxw or size <= 30:
+            return f
+        size -= 2
 
 
 def _text_img(text, f, fill, track=0, shadow=(2, 4, 8, 200), glow=None, pad=36):
@@ -203,13 +223,14 @@ def _place(ch, bottom=None):
     return int(max(SAFE_TOP, min(H * 0.45 - ch / 2, SAFE_BOTTOM - ch)))
 
 
-def _handle(L, handle, fonts, fb, x=None, color=(255, 255, 255, 170), track_em=0.0):
+def _handle(L, handle, fonts, fb, x=None, color=(255, 255, 255, 191), track_em=0.0):
     if not handle:
         return
-    f = _font(fonts, "Montserrat-Medium.ttf", 30, None, fb["sans"])
-    tr = track_em * 30
+    f = _font(fonts, "Montserrat-Medium.ttf", HANDLE_PX, None, fb["sans"])
+    tr = track_em * HANDLE_PX
     lw = tlen(handle, f, tr)
-    L.text(handle, f, color, (W - lw) / 2 if x is None else x, HANDLE_Y, 0.5, 0.5, track=tr)
+    L.text(handle, f, color, (W - lw) / 2 if x is None else x, HANDLE_Y, 0.5, 0.5, track=tr,
+           shadow=(1, 2, 6, 230))
 
 
 # ---------- uslublar ----------
@@ -217,17 +238,17 @@ def _klassik(q, author, handle, L, fonts, fb):
     mk = lambda s: _font(fonts, "CormorantGaramond-SemiBold.ttf", s, None, fb["serif"])
     f, lines, lh, tr, size = _fit(q, mk, 88, W - 220, 0, 1.22, SAFE_BOTTOM - SAFE_TOP - 220)
     mark_h = 110
-    total = mark_h + len(lines) * lh + (110 if author else 0)
+    total = mark_h + len(lines) * lh + (120 if author else 0)
     y = _place(total)
-    L.scrim(y - 220, y + total + 220, alpha=96, blur=160)
+    L.scrim(y - 220, y + total + 220, alpha=min(165, 100 + 22 * max(0, len(lines) - 2)), blur=160)
     mf = _font(fonts, "CormorantGaramond-SemiBold.ttf", 150, None, fb["serif"])
     L.text("“", mf, (245, 240, 230, 154), (W - mf.getlength("“")) / 2, y - 25, shadow=(3, 4, 6, 200))
     t = _reveal_lines(L, lines, f, "#F5F0E6", y + mark_h, lh, 0, "line", 0.3, 0.5, shadow=(3, 4, 6, 200))
     if author:
         yy = y + mark_h + len(lines) * lh
         L.rect(W // 2 - 45, yy + 26, 90, 3, (217, 213, 204, 180), t + 0.1)
-        af = _font(fonts, "CormorantGaramond-MediumItalic.ttf", 46, None, fb["italic"])
-        L.text(author, af, "#E8D9B5", (W - tlen(author, af)) / 2, yy + 40, t + 0.3, shadow=(3, 4, 6, 200))
+        af = _font(fonts, "CormorantGaramond-MediumItalic.ttf", 50, None, fb["italic"])
+        L.text(author, af, "#F6EBCB", (W - tlen(author, af)) / 2, yy + 40, t + 0.3, shadow=(3, 4, 6, 200))
     _handle(L, handle, fonts, fb)
     return {"grade": "eq=saturation=1.06:contrast=1.05:brightness=-0.02", "finish": ""}
 
@@ -235,18 +256,19 @@ def _klassik(q, author, handle, L, fonts, fb):
 def _muharrir(q, author, handle, L, fonts, fb):
     mk = lambda s: _font(fonts, "PlayfairDisplay-Variable.ttf", s, 500, fb["serif"])
     xt, maxw = 140, 850
-    f, lines, lh, tr, size = _fit(q, mk, 100, maxw, 0, 1.2, SAFE_BOTTOM - SAFE_TOP - 160)
-    extra = 130 if author else 0
+    f, lines, lh, tr, size = _fit(q, mk, 100, maxw, 0, 1.2, SAFE_BOTTOM - SAFE_TOP - 180)
+    extra = 165 if author else 0
     total = len(lines) * lh + extra
     y = _place(total)
-    L.scrim(y - 200, y + total + 200, alpha=130, blur=150)
+    L.scrim(y - 200, y + total + 200, alpha=min(185, 130 + 18 * max(0, len(lines) - 3)), blur=150)
     L.rect(96, y + 8, 4, total - 16, GOLD + (235,), 0.0)
     t = _reveal_lines(L, lines, f, "#FBF8F1", y, lh, 0, "rise", 0.4, 0.7, align="l", x0=xt,
                       shadow=(2, 4, 8, 190))
     if author:
-        af = _font(fonts, "Montserrat-Variable.ttf", 26, 500, fb["sans"])
-        L.text(author.upper(), af, GOLD + (255,), xt, y + len(lines) * lh + 52, t + 0.3, 0.5,
-               track=5, shadow=(1, 2, 5, 200))
+        a = author.upper()
+        af = _author_font(fonts, "Montserrat-Variable.ttf", 500, AUTHOR_PX, a, 3, maxw, fb["sans"])
+        L.text(a, af, GOLD + (255,), xt, y + len(lines) * lh + 68, t + 0.3, 0.5,
+               track=3, shadow=(1, 2, 6, 230))
     _handle(L, handle, fonts, fb, x=xt)
     return {"grade": "eq=saturation=0.82:contrast=1.08:brightness=-0.04,colorbalance=bs=0.04:bm=0.03",
             "finish": ""}
@@ -257,8 +279,8 @@ def _shisha(q, author, handle, L, fonts, fb):
     cw, inner = 900, 800
     padt, padb = 92, 66
     f, lines, lh, tr, size = _fit(q, mk, 72, inner, 0, 1.3,
-                                  SAFE_BOTTOM - SAFE_TOP - padt - padb - (72 if author else 0))
-    ch = padt + len(lines) * lh + (72 if author else 0) + padb
+                                  SAFE_BOTTOM - SAFE_TOP - padt - padb - (100 if author else 0))
+    ch = padt + len(lines) * lh + (100 if author else 0) + padb
     cy = _place(ch)
     cx = (W - cw) // 2
     m = 90
@@ -271,17 +293,17 @@ def _shisha(q, author, handle, L, fonts, fb):
     ImageDraw.Draw(sh).rounded_rectangle([m, m + 18, m + cw, m + ch + 18], radius=56, fill=(0, 0, 0, 150))
     card = Image.alpha_composite(card, sh.filter(ImageFilter.GaussianBlur(34)))
     cd = ImageDraw.Draw(card)
-    cd.rounded_rectangle([m, m, m + cw - 1, m + ch - 1], radius=56, fill=(18, 20, 34, 118),
+    cd.rounded_rectangle([m, m, m + cw - 1, m + ch - 1], radius=56, fill=(8, 9, 18, 172),
                          outline=(255, 255, 255, 80), width=2)
     L.add(card, cx - m, cy - m, 0.0)
     L.rect(W // 2 - 32, cy + 52, 64, 3, GOLD + (230,), 0.0)
     t = _reveal_lines(L, lines, f, "#FFFFFF", cy + padt, lh, 0, "word", 0.28, 0.3,
                       shadow=(2, 3, 9, 200))
     if author:
-        af = _font(fonts, "Montserrat-Variable.ttf", 26, 500, fb["sans"])
         a = author.upper()
-        L.text(a, af, "#EADFC8", (W - tlen(a, af, 5)) / 2, cy + padt + len(lines) * lh + 30, t + 0.25, 0.5,
-               track=5, shadow=(1, 2, 5, 200))
+        af = _author_font(fonts, "Montserrat-Variable.ttf", 500, AUTHOR_PX, a, 3, inner, fb["sans"])
+        L.text(a, af, "#F1E7D0", (W - tlen(a, af, 3)) / 2, cy + padt + len(lines) * lh + 34, t + 0.25, 0.5,
+               track=3, shadow=(1, 2, 6, 230))
     _handle(L, handle, fonts, fb)
     return {"grade": "eq=saturation=1.14:contrast=1.03:brightness=-0.01", "finish": "",
             "card": (cx, cy, cw, ch, mpath)}
@@ -291,16 +313,17 @@ def _kino(q, author, handle, L, fonts, fb):
     mk = lambda s: _font(fonts, "Lora-Italic-Variable.ttf", s, 500, fb["italic"])
     xt, maxw = 110, 860
     f, lines, lh, tr, size = _fit(q, mk, 66, maxw, 0, 1.32, 560)
-    total = len(lines) * lh + (80 if author else 0)
+    total = len(lines) * lh + (108 if author else 0)
     y = _place(total, bottom=SAFE_BOTTOM)
     L.scrim(y - 420, SAFE_BOTTOM + 170, alpha=185, blur=120)
     t = _reveal_lines(L, lines, f, "#FFF3DE", y, lh, 0, "line", 0.6, 0.9, align="l", x0=xt,
                       shadow=(2, 3, 9, 225))
     if author:
-        af = _font(fonts, "Montserrat-Variable.ttf", 25, 500, fb["sans"])
+        a = "— " + author.upper()
+        af = _author_font(fonts, "Montserrat-Variable.ttf", 500, AUTHOR_PX, a, 3, maxw, fb["sans"])
         L.rect(xt, y + len(lines) * lh + 18, 56, 2, (227, 183, 122, 230), t + 0.2, 0.5)
-        L.text("— " + author.upper(), af, "#E3B77A", xt, y + len(lines) * lh + 36, t + 0.4, 0.6,
-               track=5, shadow=(1, 2, 5, 210))
+        L.text(a, af, "#F0C48A", xt, y + len(lines) * lh + 40, t + 0.4, 0.6,
+               track=3, shadow=(1, 2, 6, 230))
     _handle(L, handle, fonts, fb, x=xt, track_em=0.1)
     bar = 190
     return {"grade": ("eq=saturation=0.88:contrast=1.12:brightness=-0.05,"
@@ -313,8 +336,8 @@ def _mono(q, author, handle, L, fonts, fb):
     mk = lambda s: _font(fonts, "Montserrat-Variable.ttf", s, 700, fb["sans"])
     maxw = 880
     f, lines, lh, tr, size = _fit(q.upper(), mk, 62, maxw, 0.1, 1.42,
-                                  SAFE_BOTTOM - SAFE_TOP - 190)
-    total = 56 + len(lines) * lh + 54 + (60 if author else 0)
+                                  SAFE_BOTTOM - SAFE_TOP - 220)
+    total = 56 + len(lines) * lh + 54 + (84 if author else 0)
     y = _place(total)
     L.scrim(y - 240, y + total + 240, alpha=130, blur=160)
     L.rect(W // 2 - 60, y, 120, 3, (255, 255, 255, 235), 0.0)
@@ -323,21 +346,21 @@ def _mono(q, author, handle, L, fonts, fb):
     yb = ty + len(lines) * lh + 22
     L.rect(W // 2 - 60, yb, 120, 3, (255, 255, 255, 235), t + 0.1, 0.4)
     if author:
-        af = _font(fonts, "Montserrat-Variable.ttf", 24, 500, fb["sans"])
         a = author.upper()
-        L.text(a, af, (255, 255, 255, 210), (W - tlen(a, af, 6)) / 2, yb + 28, t + 0.25, 0.5,
-               track=6, shadow=(1, 2, 6, 220))
+        af = _author_font(fonts, "Montserrat-Variable.ttf", 500, AUTHOR_PX, a, 4, maxw, fb["sans"])
+        L.text(a, af, (255, 255, 255, 235), (W - tlen(a, af, 4)) / 2, yb + 30, t + 0.25, 0.5,
+               track=4, shadow=(1, 2, 8, 235))
     _handle(L, handle, fonts, fb, track_em=0.12)
     return {"grade": "hue=s=0,eq=contrast=1.2:brightness=-0.08", "finish": ""}
 
 
 def _romantik(q, author, handle, L, fonts, fb):
     mk = lambda s: _font(fonts, "PlayfairDisplay-Italic-Variable.ttf", s, 500, fb["italic"])
-    f, lines, lh, tr, size = _fit(q, mk, 84, 860, 0, 1.3, SAFE_BOTTOM - SAFE_TOP - 250)
-    top, bot = 70, (130 if author else 20)
+    f, lines, lh, tr, size = _fit(q, mk, 84, 860, 0, 1.3, SAFE_BOTTOM - SAFE_TOP - 270)
+    top, bot = 70, (150 if author else 20)
     total = top + len(lines) * lh + bot
     y = _place(total)
-    L.scrim(y - 230, y + total + 230, alpha=150, blur=170, color=(46, 8, 26))
+    L.scrim(y - 230, y + total + 230, alpha=min(200, 170 + 10 * max(0, len(lines) - 3)), blur=170, color=(40, 6, 22))
     # bezak: ikki chiziq va o'rtada romb
     d = Image.new("RGBA", (260, 24), (0, 0, 0, 0))
     dd = ImageDraw.Draw(d)
@@ -345,13 +368,13 @@ def _romantik(q, author, handle, L, fonts, fb):
     dd.line([(160, 12), (250, 12)], fill=GOLD + (230,), width=2)
     dd.polygon([(130, 2), (140, 12), (130, 22), (120, 12)], fill=GOLD + (255,))
     L.add(d, (W - 260) // 2, y + 8, 0.0)
-    glow = ((255, 176, 150), 14)
-    t = _reveal_lines(L, lines, f, "#FFE9DC", y + top, lh, 0, "rise", 0.45, 0.8,
+    glow = ((255, 176, 150), 10)
+    t = _reveal_lines(L, lines, f, "#FFF7F0", y + top, lh, 0, "rise", 0.45, 0.8,
                       shadow=(0, 4, 10, 225), glow=glow, pad=44)
     if author:
-        af = _font(fonts, "GreatVibes-Regular.ttf", 78, None, fb["italic"])
-        L.text(author, af, "#F7D9A0", (W - tlen(author, af)) / 2, y + top + len(lines) * lh + 18,
-               t + 0.35, 0.6, rise=14, shadow=(0, 3, 10, 170), glow=((247, 200, 130), 12), pad=44)
+        af = _author_font(fonts, "PlayfairDisplay-Italic-Variable.ttf", 500, 52, author, 0, 860, fb["italic"])
+        L.text(author, af, "#FBE3B0", (W - tlen(author, af)) / 2, y + top + len(lines) * lh + 26,
+               t + 0.35, 0.6, rise=14, shadow=(0, 3, 9, 230))
     _handle(L, handle, fonts, fb)
     return {"grade": ("eq=saturation=1.1:contrast=0.98:brightness=0.02,"
                       "colorbalance=rs=0.08:gs=-0.02:bs=0.03:rm=0.06:bm=0.02:rh=0.04:gh=0.02,"
