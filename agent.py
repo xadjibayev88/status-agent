@@ -941,7 +941,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true", help="video yasaydi, joylamaydi")
     ap.add_argument("--now", action="store_true", help="hoziroq bitta joylaydi")
+    ap.add_argument("--fayl", help="tayyor videoni joylash (qolda/...mp4), o'zi yasamaydi")
+    ap.add_argument("--matn", help="tayyor video uchun tavsif fayli (.txt)")
+    ap.add_argument("--muqova", type=float, default=2.0, help="muqova kadri, soniyada")
     a = ap.parse_args()
+
+    if a.fayl:  # egasi yuborgan tayyor video: faqat joylaymiz
+        global MUQOVA_S
+        cfg = load_cfg()
+        if not cfg.get("access_token"):
+            sys.exit("IG_ACCESS_TOKEN yo'q")
+        MUQOVA_S = a.muqova
+        caption = Path(a.matn).read_text(encoding="utf-8").strip() if a.matn else ""
+        ig_joyla(cfg, Path(a.fayl), caption)
+        return
 
     if a.test:
         cfg = load_cfg()

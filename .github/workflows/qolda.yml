@@ -1,0 +1,37 @@
+name: Tayyor videoni joylash
+
+# Egasi yuborgan tayyor videoni @h6yotiy'ga Reels (va Story) qilib joylaydi.
+on:
+  workflow_dispatch:
+    inputs:
+      fayl:
+        description: "Video fayl (repo ichida)"
+        default: "qolda/ota-va-ogil.mp4"
+      matn:
+        description: "Tavsif fayli (.txt)"
+        default: "qolda/ota-va-ogil.txt"
+      muqova:
+        description: "Muqova kadri, soniyada"
+        default: "6"
+
+concurrency:
+  group: joyla
+  cancel-in-progress: false
+
+jobs:
+  joyla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Joylash
+        run: python agent.py --fayl "${{ inputs.fayl }}" --matn "${{ inputs.matn }}" --muqova "${{ inputs.muqova }}"
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          VIDEO_REPO: ${{ secrets.VIDEO_REPO }}
+          VIDEO_REPO_TOKEN: ${{ secrets.VIDEO_REPO_TOKEN }}
