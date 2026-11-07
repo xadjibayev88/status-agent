@@ -771,15 +771,28 @@ def cloud_ochir(cfg, public_id):
 def github_yukla(cfg, video):
     import requests
     repo, tok = cfg["video_repo"].strip(), cfg["video_repo_token"].strip()
-    path = f"v/{datetime.now():%Y%m%d_%H%M%S}.mp4"
-    api = f"https://api.github.com/repos/{repo}/contents/{path}"
     hdr = {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}
     with open(video, "rb") as f:
         raw = f.read()
-    r = requests.put(api, headers=hdr, timeout=600, json={
-        "message": "vaqtincha video", "content": base64.b64encode(raw).decode()})
-    if not r.ok:
-        raise RuntimeError(f"GitHub xatosi {r.status_code}: {r.text[:300]}")
+    content = base64.b64encode(raw).decode()
+    for urinish in range(1, 5):  # GitHub ba'zan 5xx qaytaradi: qayta urinamiz
+        path = f"v/{datetime.now():%Y%m%d_%H%M%S}_{urinish}.mp4"
+        api = f"https://api.github.com/repos/{repo}/contents/{path}"
+        try:
+            r = requests.put(api, headers=hdr, timeout=600, json={
+                "message": "vaqtincha video", "content": content})
+        except requests.RequestException as e:
+            log(f"GitHub ulanish xatosi ({urinish}/4): {e}")
+            time.sleep(15 * urinish)
+            continue
+        if r.ok:
+            break
+        if r.status_code < 500 or urinish == 4:
+            raise RuntimeError(f"GitHub xatosi {r.status_code}: {r.text[:300]}")
+        log(f"GitHub xatosi {r.status_code} ({urinish}/4), qayta urinamiz")
+        time.sleep(15 * urinish)
+    else:
+        raise RuntimeError("GitHub: yuklab bo'lmadi (ulanish xatosi)")
     j = r.json()
     sha, fsha = j["commit"]["sha"], j["content"]["sha"]
     if len(raw) <= 19 * 1024 * 1024:
