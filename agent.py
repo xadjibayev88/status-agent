@@ -599,7 +599,7 @@ def video_yasa(q, cfg):
 
     cmd = [ffmpeg_exe(), "-y"]
     if is_video:
-        cmd += ["-stream_loop", "-1", "-t", d, "-i", str(bg)]
+        cmd += ["-reinit_filter", "0", "-stream_loop", "-1", "-t", d, "-i", str(bg)]  # takrorlanishda filtr qayta qurilmasin
     else:
         cmd += ["-framerate", "30", "-loop", "1", "-t", d, "-i", str(bg)]
     card = STIL.get("card") if STIL else None
