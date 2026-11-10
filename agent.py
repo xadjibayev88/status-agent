@@ -634,9 +634,11 @@ def video_yasa(q, cfg):
          + grade + zoom + pan + ",vignette=PI/4.6,setsar=1" + ("[vb]" if card else finish + "[v0]")]
     if card:
         cx, cy, cw, ch, _m = card
+        # yuv420 da toq o'lcham juftga yaxlitlanadi: niqob bilan o'lcham mos kelishi uchun hammasini juft qilamiz
+        cx, cy, cw, ch = (v // 2 * 2 for v in (cx, cy, cw, ch))
         f.append("[vb]split[va][vc]")
         f.append(f"[vc]crop={cw}:{ch}:{cx}:{cy},gblur=sigma=50[vg]")
-        f.append("[1:v]format=gray,fps=30[vm]")
+        f.append(f"[1:v]format=gray,fps=30,scale={cw}:{ch}[vm]")
         f.append("[vg][vm]alphamerge[vk]")
         f.append(f"[va][vk]overlay={cx}:{cy}:format=auto{finish}[v0]")
     for i, layer in enumerate(layers, off):
