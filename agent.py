@@ -843,7 +843,18 @@ def ig_joyla(cfg, video, caption):
     ver = cfg.get("api_version", "v23.0")
     hdr = {"Authorization": f"Bearer {cfg['access_token']}"}
 
-    def joyla(data):
+    def joyla(data, urinishlar=3):
+        # Instagram ba'zan videoni sababsiz "ERROR" deb qaytaradi: konteynerni qayta yaratib ko'ramiz
+        for n in range(1, urinishlar + 1):
+            try:
+                return bir_marta(data)
+            except RuntimeError as e:
+                if "qabul qilmadi" not in str(e) or n == urinishlar:
+                    raise
+                log(f"Instagram videoni qabul qilmadi ({n}/{urinishlar}), 30 soniyadan keyin qayta urinamiz")
+                time.sleep(30)
+
+    def bir_marta(data):
         r = _check(requests.post(f"https://{host}/{ver}/me/media", headers=hdr,
                                  timeout=60, data=data))
         cid = r.json()["id"]
