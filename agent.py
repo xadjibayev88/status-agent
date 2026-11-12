@@ -789,7 +789,8 @@ def github_yukla(cfg, video):
             continue
         if r.ok:
             break
-        if r.status_code < 500 or urinish == 4:
+        vaqtincha = r.status_code >= 500 or (r.status_code in (403, 409) and "timeout" in r.text.lower())
+        if not vaqtincha or urinish == 4:  # "The rule did not run because of a timeout" ham vaqtinchalik
             raise RuntimeError(f"GitHub xatosi {r.status_code}: {r.text[:300]}")
         log(f"GitHub xatosi {r.status_code} ({urinish}/4), qayta urinamiz")
         time.sleep(15 * urinish)
