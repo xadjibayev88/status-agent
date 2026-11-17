@@ -922,9 +922,14 @@ def bitta_status(cfg, st, joylash):
         log(f"STIL={forced!r} noma'lum ({', '.join(stillar.NAMES)}), e'tiborsiz qoldirildi")
         forced = None
     STIL_NOMI = stillar.tanla(st["stillar"], forced, os.environ.get("GITHUB_RUN_NUMBER"))
-    video = video_yasa(q, cfg)
+    premium_on = os.environ.get("PREMIUM", "1") != "0"   # 2026-11-17: yangi uslub (ovoz + kinetik matn + original fon)
+    if premium_on:
+        import premium
+        video = premium.render(q, cfg)
+    else:
+        video = video_yasa(q, cfg)
     if joylash:
-        ig_joyla(cfg, video, caption_yasa(q, cfg))
+        ig_joyla(cfg, video, premium.caption(q, cfg) if premium_on else caption_yasa(q, cfg))
         st["ishlatilgan"].append(q["text"])
         st["stillar"] = (st["stillar"] + [STIL_NOMI])[-10:]
         save_state(st)
