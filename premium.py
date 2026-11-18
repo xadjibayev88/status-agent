@@ -34,8 +34,14 @@ QUESTIONS = ["Kimga yuborgan bo'lardingiz?", "Rozimisiz? Izohda yozing", "Kimni 
              "Sizda ham shunday bo'lganmi?"]
 
 VOICE_LEAD = 0.5       # ovoz boshlanishidan oldingi tinchlik (hook ko'rinsin)
-OUTRO = 3.6            # ovoz tugagach: muallif + savol + kanal
-MIN_DUR, MAX_DUR = 14.0, 40.0
+OUTRO = 2.8            # ovoz tugagach: muallif + savol + kanal (qisqa video oxirigacha ko'riladi)
+MIN_DUR, MAX_DUR = 12.0, 40.0
+VOICE_DEFAULT = "uz-UZ-SardorNeural"   # Azure'dagi 2 ta o'zbekcha ovozdan biri; erkak, tiniq va salmoqli
+# Haqiqiy (jonli) kadrlar: kinematografik, qorong'u, odam/tabiat/shahar. Har videoga 3 xil mavzu olinadi.
+CLIP_QUERIES = ["lonely man walking city night", "rain on window night", "sunset silhouette person", "ocean waves slow motion",
+                "foggy forest morning", "city lights night", "mountain clouds", "night road driving", "woman looking out window",
+                "person alone beach sunset", "autumn leaves falling", "starry sky night", "walking in rain street",
+                "train window view", "sunrise over hills", "silhouette on rooftop city"]
 GHOST = 0.30           # hali aytilmagan so'zlar ko'rinishi (0..1)
 
 COVER_S = 4.0          # render() oxirida yangilanadi: agent.py Instagram muqovasi uchun o'qiydi
@@ -98,8 +104,9 @@ def ovoz(text: str, out: Path) -> dict | None:
         import edge_tts
     except ImportError:
         return None
-    voices = [os.environ.get("TTS_VOICE", "uz-UZ-MadinaNeural")] * 2 + ["uz-UZ-SardorNeural"]
-    rate = os.environ.get("TTS_RATE", "-8%")
+    main_voice = os.environ.get("TTS_VOICE", VOICE_DEFAULT)
+    voices = [main_voice, main_voice, "uz-UZ-MadinaNeural" if "Sardor" in main_voice else "uz-UZ-SardorNeural"]
+    rate = os.environ.get("TTS_RATE", "-6%")
 
     async def go(voice, boundary):
         com = edge_tts.Communicate(okina(text), voice, rate=rate, boundary=boundary)
@@ -215,6 +222,125 @@ class Fon:
         return Image.blend(im, Image.merge("RGB", [self.grain[f % 3]] * 3), 0.045)
 
 
+# ---------------- jonli fon: haqiqiy kadrlar ----------------
+def _download(url: str, dest: Path) -> bool:
+    import requests
+    try:
+        with requests.get(url, stream=True, timeout=120) as r:
+            r.raise_for_status()
+            with open(dest, "wb") as fh:
+                for chunk in r.iter_content(1 << 20):
+                    fh.write(chunk)
+        return dest.stat().st_size > 50_000
+    except Exception as e:  # noqa: BLE001
+        print(f"Klip yuklanmadi: {type(e).__name__}")
+        return False
+
+
+def _pexels(key: str, query: str, rng: random.Random, used: set, tmp: Path) -> Path | None:
+    import requests
+    r = requests.get("https://api.pexels.com/videos/search", headers={"Authorization": key}, timeout=30,
+                     params={"query": query, "orientation": "portrait", "size": "medium", "per_page": 20})
+    r.raise_for_status()
+    vids = [v for v in r.json().get("videos", []) if v.get("duration", 0) >= 5 and v["id"] not in used]
+    rng.shuffle(vids)
+    for v in vids:
+        files = [f for f in v.get("video_files", []) if f.get("file_type") == "video/mp4"
+                 and f.get("height", 0) >= f.get("width", 0) and 540 <= f.get("width", 0) <= 1100]
+        if not files:
+            continue
+        dest = tmp / f"pexels_{v['id']}.mp4"
+        if _download(max(files, key=lambda x: x["width"])["link"], dest):
+            used.add(v["id"])
+            return dest
+    return None
+
+
+def _pixabay(key: str, query: str, rng: random.Random, used: set, tmp: Path) -> Path | None:
+    import requests
+    r = requests.get("https://pixabay.com/api/videos/", timeout=30,
+                     params={"key": key, "q": query, "order": "popular", "per_page": 30, "safesearch": "true", "min_width": 720})
+    r.raise_for_status()
+    hits = [h for h in r.json().get("hits", []) if h.get("duration", 0) >= 5 and h["id"] not in used]
+    rng.shuffle(hits)
+    for h in hits:
+        vs = h.get("videos") or {}
+        f = next((vs[k] for k in ("medium", "small", "large") if vs.get(k, {}).get("url")
+                  and (vs[k].get("size") or 0) < 30 * 1024 * 1024), None)
+        if not f:
+            continue
+        dest = tmp / f"pixabay_{h['id']}.mp4"
+        if _download(f["url"], dest):
+            used.add(h["id"])
+            return dest
+    return None
+
+
+def fetch_clips(cfg: dict, n: int, rng: random.Random, tmp: Path) -> list[Path]:
+    """Pexels (asosiy) va Pixabay (zaxira) dan n ta turli mavzudagi klip. Hech biri bo'lmasa — bo'sh ro'yxat."""
+    keys = [("pexels", (cfg.get("pexels_api_key") or os.environ.get("PEXELS_API_KEY") or "").strip(), _pexels),
+            ("pixabay", (cfg.get("pixabay_api_key") or os.environ.get("PIXABAY_API_KEY") or "").strip(), _pixabay)]
+    keys = [k for k in keys if k[1]]
+    if not keys:
+        print("Pexels/Pixabay kaliti yo'q: jonli klip olinmadi")
+        return []
+    queries = cfg.get("premium_fon_mavzu") or CLIP_QUERIES
+    queries = rng.sample(queries, min(len(queries), n + 3))
+    clips, used = [], set()
+    for q in queries:
+        if len(clips) >= n:
+            break
+        for nom, key, fn in keys:
+            try:
+                p = fn(key, q, rng, used, tmp)
+            except Exception as e:  # noqa: BLE001
+                print(f"{nom} '{q}' ishlamadi: {type(e).__name__}")
+                continue
+            if p:
+                print(f"Klip: {nom} '{q}' -> {p.name}")
+                clips.append(p)
+                break
+    return clips
+
+
+def compose_bg(clips: list[Path], dur: float, out: Path) -> None:
+    """Klip(lar)ni 1080x1920 ga moslab, sekin siljitib (qo'l kamerasi hissi), qorong'ulashtirib va rang berib,
+    bir-biriga yumshoq o'tkazib bitta fon videosiga birlashtiradi. Har 4-5 soniyada yangi kadr = e'tibor yangilanadi."""
+    n, xf = len(clips), 0.7
+    seg = (dur + (n - 1) * xf) / n
+    cmd = [ffmpeg(), "-v", "error", "-y"]
+    for c in clips:
+        cmd += ["-stream_loop", "-1", "-t", f"{seg + 0.6:.2f}", "-i", str(c)]
+    fl = []
+    for i in range(n):
+        fl.append(f"[{i}:v]fps={FPS},scale=1200:2134:force_original_aspect_ratio=increase,crop=1200:2134,"
+                  f"crop=1080:1920:x='60+sin(t*0.5+{i})*45':y='107+cos(t*0.4+{i})*60',"
+                  f"eq=brightness=-0.10:saturation=1.08:contrast=1.06,setsar=1,format=yuv420p,"
+                  f"trim=duration={seg:.3f},setpts=PTS-STARTPTS[v{i}]")
+    last = "v0"
+    for i in range(1, n):
+        fl.append(f"[{last}][v{i}]xfade=transition=fade:duration={xf}:offset={i * (seg - xf):.3f}[x{i}]")
+        last = f"x{i}"
+    fl.append(f"[{last}]noise=alls=6:allf=t,vignette=PI/5,trim=duration={dur:.3f},format=yuv420p[bg]")
+    tmp_out = out.with_name("tmp_" + out.name)
+    cmd += ["-filter_complex", ";".join(fl), "-map", "[bg]", "-t", f"{dur:.3f}", "-c:v", "libx264", "-crf", "17",
+            "-preset", "veryfast", "-pix_fmt", "yuv420p", str(tmp_out)]
+    subprocess.run(cmd, check=True)
+    tmp_out.rename(out)
+
+
+def scrim_layer() -> Image.Image:
+    """Matn orqasida yumshoq qora gradient: har qanday kadr ustida ham o'qilsin."""
+    a = np.zeros((H, W), dtype=np.uint8)
+    ys = np.arange(H)
+    prof = np.exp(-(((ys - H * 0.46) / (H * 0.24)) ** 2)) * 125
+    low = np.clip((ys - (H - 650)) / 400, 0, 1) * 110       # pastda savol/kanal uchun
+    a[:] = np.clip(prof + low, 0, 200).astype(np.uint8)[:, None]
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    im.putalpha(Image.fromarray(a, "L"))
+    return im
+
+
 # ---------------- matn joylashuvi ----------------
 def layout(words: list[str], fq, maxw: int):
     d = ImageDraw.Draw(Image.new("L", (1, 1)))
@@ -292,7 +418,22 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
     fhook, fsmall, fq2 = font(FONT_UI, 40, 600), font(FONT_UI, 36, 500), font(FONT_UI, 44, 700)
 
     theme = rng.choice(THEMES)
-    fon = Fon(theme, seed)
+    # jonli fon: haqiqiy kadrlar (Pexels/Pixabay). Bo'lmasa — o'zimiz chizgan yorug'lik fon (zaxira)
+    bg_file, fon = tmp / "bg.mp4", None
+    try:
+        clips = fetch_clips(cfg, 3 if dur >= 10 else 2, rng, tmp)
+        if clips:
+            compose_bg(clips, dur, bg_file)
+    except Exception as e:  # noqa: BLE001
+        print(f"Jonli fon yasalmadi ({type(e).__name__}: {e}), zaxira fon ishlatiladi")
+        bg_file.unlink(missing_ok=True)
+    live = bg_file.exists() and bg_file.stat().st_size > 100_000
+    if not live:
+        fon = Fon(theme, seed)
+    scrim = scrim_layer() if live else None
+    bg_proc = subprocess.Popen([ffmpeg(), "-v", "error", "-i", str(bg_file), "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                               stdout=subprocess.PIPE) if live else None
+    last_bg = None
     hook = rng.choice(HOOKS).upper()
     question = rng.choice(QUESTIONS)
     channel = cfg.get("kanal_nomi") or "@h6yotiy"
@@ -307,7 +448,13 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
     black = Image.new("RGB", (W, H), (0, 0, 0))
     for f in range(total):
         t = f / FPS
-        im = fon.frame(t, f)
+        if live:
+            buf = bg_proc.stdout.read(W * H * 3)
+            last_bg = Image.frombytes("RGB", (W, H), buf) if len(buf) == W * H * 3 else last_bg
+            im = (last_bg or black).copy()
+            im.paste(scrim, (0, 0), scrim)
+        else:
+            im = fon.frame(t, f)
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         d = ImageDraw.Draw(layer)
         # hook yorlig'i (birinchi kadrdan)
@@ -339,14 +486,17 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
         # yakun: savol va kanal (ovoz tugashi bilan)
         ea = ease((t - cta_t) / 0.5)
         if ea > 0:
-            d.text((W / 2, H - 430), question, font=fq2, fill=(255, 255, 255, int(255 * ea)), anchor="mm")
-            d.text((W / 2, H - 360), channel, font=fsmall, fill=GOLD + (int(255 * ea),), anchor="mm")
+            d.text((W / 2, H - 500), question, font=fq2, fill=(255, 255, 255, int(255 * ea)), anchor="mm")
+            d.text((W / 2, H - 435), "Shu gap kerak odamga yuboring", font=fsmall, fill=(235, 235, 240, int(230 * ea)), anchor="mm")
+            d.text((W / 2, H - 365), channel, font=fsmall, fill=GOLD + (int(255 * ea),), anchor="mm")
         im.paste(layer, (0, 0), layer)
         fade = max(0.0, (t - (dur - 0.6)) / 0.6)          # oxirida yumshoq so'nish
         if fade > 0:
             im = Image.blend(im, black, min(fade, 1.0))
         ff.stdin.write(im.tobytes())
     ff.stdin.close(); ff.wait()
+    if bg_proc:
+        bg_proc.stdout.read(); bg_proc.stdout.close(); bg_proc.wait()   # oqimni oxirigacha o'qib yopamiz
     if ff.returncode != 0 or not silent.exists():
         raise RuntimeError("Video kadrlarini yozishda xato (ffmpeg)")
 
@@ -355,7 +505,7 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
     fl, n = [], 1
     if voice:
         cmd += ["-i", str(voice_file)]
-        fl.append(f"[{n}:a]adelay={int(VOICE_LEAD * 1000)}|{int(VOICE_LEAD * 1000)},volume=1.6[vo]"); n += 1
+        fl.append(f"[{n}:a]highpass=f=80,acompressor=threshold=-20dB:ratio=3:attack=5:release=90,equalizer=f=3200:t=q:w=1:g=2.5,adelay={int(VOICE_LEAD * 1000)}|{int(VOICE_LEAD * 1000)},volume=1.7[vo]"); n += 1
     if music:
         cmd += ["-stream_loop", "-1", "-i", str(music)]
         if voice:   # ovoz paytida musiqa past, ovoz tugagach asta ko'tariladi
@@ -379,7 +529,7 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
         raise RuntimeError(f"Video davomiyligi noto'g'ri: kutilgan {dur}s, chiqdi {got:.2f}s")
     if (voice or music) and not has_stream(out, "Audio"):
         raise RuntimeError("Videoda ovoz yo'q")
-    print(f"Premium video: {out.name} ({got:.1f}s, ovoz={'ha' if voice else 'yoq'}, muqova={COVER_S}s, tema={THEMES.index(theme)})")
+    print(f"Premium video: {out.name} ({got:.1f}s, ovoz={'ha' if voice else 'yoq'}, fon={'jonli' if live else 'zaxira'}, muqova={COVER_S}s)")
     return out
 
 
