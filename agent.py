@@ -922,7 +922,7 @@ def bitta_status(cfg, st, joylash):
         log(f"STIL={forced!r} noma'lum ({', '.join(stillar.NAMES)}), e'tiborsiz qoldirildi")
         forced = None
     STIL_NOMI = stillar.tanla(st["stillar"], forced, os.environ.get("GITHUB_RUN_NUMBER"))
-    premium_on = os.environ.get("PREMIUM", "1") != "0"   # 2026-11-17: yangi uslub (ovoz + kinetik matn + original fon)
+    premium_on = os.environ.get("PREMIUM", "0") == "1"   # 2026-11-18: egasi talabi bilan eski uslub (stillar + fon video + musiqa) standart. Premium: PREMIUM=1
     video = None
     if premium_on:
         try:
