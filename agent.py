@@ -914,7 +914,7 @@ def story_kerakmi(cfg):
 def bitta_status(cfg, st, joylash):
     if joylash and not (cloud_parse(cfg) or (cfg.get("video_repo") and cfg.get("video_repo_token"))):
         raise RuntimeError("Secrets'da VIDEO_REPO_TOKEN va VIDEO_REPO yo'q: Instagram uchun vaqtincha havola kerak")
-    global STIL_NOMI
+    global STIL_NOMI, MUQOVA_S
     q = tanla_matn(st)
     log(f"Matn: {q['text'][:50]!r} — {q.get('author')}")
     forced = os.environ.get("STIL")
@@ -923,10 +923,16 @@ def bitta_status(cfg, st, joylash):
         forced = None
     STIL_NOMI = stillar.tanla(st["stillar"], forced, os.environ.get("GITHUB_RUN_NUMBER"))
     premium_on = os.environ.get("PREMIUM", "1") != "0"   # 2026-11-17: yangi uslub (ovoz + kinetik matn + original fon)
+    video = None
     if premium_on:
-        import premium
-        video = premium.render(q, cfg)
-    else:
+        try:
+            import premium
+            video = premium.render(q, cfg)
+            MUQOVA_S = premium.COVER_S   # muqova: matn to'liq ko'ringan kadrdan (2 soniyada matn hali yarim edi)
+        except Exception as e:  # noqa: BLE001 — premium yiqilsa ham kun bo'sh o'tmasin
+            log(f"⚠️ Premium video yasalmadi ({type(e).__name__}: {e}), oddiy uslubga o'tamiz")
+            premium_on = False
+    if video is None:
         video = video_yasa(q, cfg)
     if joylash:
         ig_joyla(cfg, video, premium.caption(q, cfg) if premium_on else caption_yasa(q, cfg))
