@@ -36,7 +36,7 @@ QUESTIONS = ["Kimga yuborgan bo'lardingiz?", "Rozimisiz? Izohda yozing", "Kimni 
 VOICE_LEAD = 0.5       # ovoz boshlanishidan oldingi tinchlik (hook ko'rinsin)
 OUTRO = 2.8            # ovoz tugagach: muallif + savol + kanal (qisqa video oxirigacha ko'riladi)
 MIN_DUR, MAX_DUR = 12.0, 40.0
-VOICE_DEFAULT = "uz-UZ-SardorNeural"   # Azure'dagi 2 ta o'zbekcha ovozdan biri; erkak, tiniq va salmoqli
+VOICE_DEFAULT = "off"   # 2026-11-18: egasi robot ovozini (Sardor/Madina) yoqtirmadi -> ovozsiz (musiqa + matn). Yoqish: TTS_VOICE=uz-UZ-SardorNeural
 # Haqiqiy (jonli) kadrlar: kinematografik, qorong'u, odam/tabiat/shahar. Har videoga 3 xil mavzu olinadi.
 CLIP_QUERIES = ["lonely man walking city night", "rain on window night", "sunset silhouette person", "ocean waves slow motion",
                 "foggy forest morning", "city lights night", "mountain clouds", "night road driving", "woman looking out window",
@@ -104,7 +104,9 @@ def ovoz(text: str, out: Path) -> dict | None:
         import edge_tts
     except ImportError:
         return None
-    main_voice = os.environ.get("TTS_VOICE", VOICE_DEFAULT)
+    main_voice = os.environ.get("TTS_VOICE", VOICE_DEFAULT).strip()
+    if main_voice.lower() in ("", "off", "yoq", "none"):
+        return None
     voices = [main_voice, main_voice, "uz-UZ-MadinaNeural" if "Sardor" in main_voice else "uz-UZ-SardorNeural"]
     rate = os.environ.get("TTS_RATE", "-6%")
 
@@ -398,8 +400,8 @@ def render(q: dict, cfg: dict, seed: int | None = None) -> Path:
         speech_end = VOICE_LEAD + voice["dur"]            # ovozning haqiqiy oxiri (muallif ham ichida)
         quote_end = ends[-1]
     else:
-        times = [0.9 + i * 0.34 for i in range(len(words))]
-        ends = [t + 0.34 for t in times]
+        times = [0.9 + i * 0.42 for i in range(len(words))]
+        ends = [t + 0.42 for t in times]
         quote_end = ends[-1]
         author_t = quote_end + 0.3 if author_words else None
         speech_end = quote_end + 1.0
